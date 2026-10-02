@@ -63,9 +63,10 @@ export default function FacturaModal({ vehiculo, onClose, onGuardado }: { vehicu
       factura_tipo_comprobante: facturado ? (tipoComprobante || null) : null,
       factura_iva_pct: facturado && ivaPct !== "" ? Number(ivaPct) : null,
     };
-    const { data, error: dbError } = await supabase2.from("vehiculos").update(payload).eq("id", vehiculo.id).select("id, marca, modelo, anio, patente, estado, moneda_compra, facturado, factura_importe, factura_numero, factura_emisor, factura_archivo_url, factura_fecha, factura_tipo_comprobante, factura_iva_pct").single();
+    const { data, error: dbError } = await supabase2.from("vehiculos").update(payload).eq("id", vehiculo.id).select("id, marca, modelo, anio, patente, estado, moneda_compra, facturado, factura_importe, factura_numero, factura_emisor, factura_archivo_url, factura_fecha, factura_tipo_comprobante, factura_iva_pct").maybeSingle();
     setGuardando(false);
     if (dbError) return setError(dbError.message);
+    if (!data) return setError("No se pudo confirmar el guardado (permisos o el vehículo ya no existe).");
     onGuardado(data as VehiculoFactura);
   };
 

@@ -94,7 +94,8 @@ export default async function ReportesPage() {
     // acá, no solo el render.
     puedeVerFinanzas ? supabase.from("v_reportes_infracciones_resumen").select("*").maybeSingle() : Promise.resolve({ data: null }),
     puedeVerFinanzas ? supabase.from("v_reportes_taller_facturacion").select("*").maybeSingle() : Promise.resolve({ data: null }),
-    supabase.from("v_reportes_ventas_por_mes").select("*").limit(12),
+    // 24 filas = 12 meses x 2 monedas (la vista trae una fila por mes Y moneda; con limit(12) solo se veían ~6 meses)
+    supabase.from("v_reportes_ventas_por_mes").select("*").limit(24),
     puedeVerFinanzas ? supabase.from("v_reportes_top_clientes").select("*") : Promise.resolve({ data: [] }),
     supabaseAdmin.from("v_reportes_clientes_por_vendedor").select("*"),
     supabase.from("v_reportes_cotizaciones_resumen").select("*").maybeSingle(),

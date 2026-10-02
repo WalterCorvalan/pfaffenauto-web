@@ -11,10 +11,10 @@ import { fmt } from "./shared";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 export default function LiquidacionesClient({
-  miId, miNombre, puedeVerLiquidacion, soyAdmin, soyAdminOFinanzas, gananciasOcultas, liquidacionesIniciales, vendedores, config,
+  miId, miNombre, puedeVerLiquidacion, soyAdmin, soyAdminOFinanzas, gananciasOcultas, liquidacionesIniciales, vendedores, cuentas, config,
 }: {
   miId: string; miNombre: string; puedeVerLiquidacion: boolean; soyAdmin: boolean; soyAdminOFinanzas: boolean; gananciasOcultas: boolean;
-  liquidacionesIniciales: any[]; vendedores: any[]; config: { comisionFija: number; pctGestora: number; pctAgencia: number };
+  liquidacionesIniciales: any[]; vendedores: any[]; cuentas: { id: string; nombre: string; moneda: string }[]; config: { comisionFija: number; pctGestora: number; pctAgencia: number };
 }) {
   const [tab, setTab] = useState<"transferencias" | "mensual" | "resumen">("transferencias");
   const [liquidaciones, setLiquidaciones] = useState(liquidacionesIniciales);
@@ -128,7 +128,7 @@ export default function LiquidacionesClient({
       </div>
 
       {tab === "transferencias" && <TransferenciasTab liquidaciones={liquidaciones} setLiquidaciones={setLiquidaciones} gananciasOcultas={gananciasOcultas} onEditar={abrirEditar} />}
-      {tab === "mensual" && <LiquidacionMensualTab liquidaciones={liquidaciones} setLiquidaciones={setLiquidaciones} gananciasOcultas={gananciasOcultas} soyAdminOFinanzas={soyAdminOFinanzas} />}
+      {tab === "mensual" && <LiquidacionMensualTab liquidaciones={liquidaciones} setLiquidaciones={setLiquidaciones} gananciasOcultas={gananciasOcultas} soyAdminOFinanzas={soyAdminOFinanzas} cuentas={cuentas} />}
       {tab === "resumen" && <ResumenAgenciaTab liquidaciones={liquidaciones} gananciasOcultas={gananciasOcultas} />}
 
       {showModal && (

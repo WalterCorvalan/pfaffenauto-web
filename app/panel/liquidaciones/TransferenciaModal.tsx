@@ -160,6 +160,32 @@ export default function TransferenciaModal({
         });
         if (error) throw error;
         id = nuevoId;
+
+        // crear_liquidacion_gestoria NO recibe el comprobante de arancel ni los
+        // datos de devolución del registro: lo que se completó en esos campos
+        // al cargar la transferencia se perdía en silencio (y finalizar
+        // exige hubo_devolucion_registro). Se guardan acá, igual que en la edición.
+        const { error: errExtra } = await supabase2.from("liquidaciones_gestoria").update({
+          hubo_devolucion_registro: huboDevolucion, sobrante_registro: huboDevolucion ? Number(sobranteRegistro) || 0 : null,
+          sobrante_comentario: huboDevolucion ? sobranteComentario || null : null, devolucion_destino: huboDevolucion ? devolucionDestino || null : null,
+          arancel_comprobante_url: arancelUrl,
+        }).eq("id", id);
+        if (errExtra) alert(`La transferencia se guardó, pero no se pudieron guardar el comprobante de arancel / la devolución del registro: ${errExtra.message}. Cargalos desde la edición.`);
+        else if (huboDevolucion && devolucionDestino === "cuenta_agencia") {
+          await notificarFinanzas(supabase2, `Sobrante de registro a confirmar — ${dominio} ($${Number(sobranteRegistro).toLocaleString("es-AR")})`, "/panel/liquidaciones");
+        }
+
+        // La alta siempre entra como "en_proceso" (el RPC de creación no
+        // finaliza). Si el usuario eligió "Terminado" al cargarla, antes
+        // quedaba en proceso sin avisar y nunca sumaba a la liquidación del
+        // mes -- se finaliza acá con el mismo RPC que usa la edición.
+        if (estado === "terminado") {
+          const { error: errFinNueva } = await supabase2.rpc("finalizar_liquidacion_gestoria", {
+            p_id: id, p_fecha_finalizado: fechaFinalizado || fechaIngresoRegistro || fechaPagoRegistro || hoy(),
+            p_motivo_sin_titulo: motivoSinTitulo || null, p_motivo_sin_arancel: motivoSinArancel || null,
+          });
+          if (errFinNueva) alert(`La transferencia se guardó pero no se pudo finalizar: ${errFinNueva.message}. Quedó "En proceso", finalizala desde la edición.`);
+        }
       } else {
         // Importes: si están bloqueados y no soy admin/finanzas, esto puede quedar pendiente de autorización.
         const importesCambiaron = Number(transfCliente) !== Number(editando.transf_cliente) || Number(transfRegistro) !== Number(editando.transf_registro)

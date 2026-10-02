@@ -72,13 +72,17 @@ export default function GestoriaClient({
 
   const toggleHito = async (expedienteId: string, h: any) => {
     const nuevo = !h.completado;
-    await supabase2.from("expediente_hitos").update({ completado: nuevo, completado_en: nuevo ? new Date().toISOString() : null }).eq("id", h.id);
+    // Sin chequear el error, un guardado rechazado (RLS, red) dejaba el
+    // hito tildado en pantalla pero sin guardar en la base.
+    const { error } = await supabase2.from("expediente_hitos").update({ completado: nuevo, completado_en: nuevo ? new Date().toISOString() : null }).eq("id", h.id);
+    if (error) { alert(`No se pudo guardar el hito: ${error.message}`); return; }
     setHitos((prev) => ({ ...prev, [expedienteId]: prev[expedienteId].map((x) => (x.id === h.id ? { ...x, completado: nuevo } : x)) }));
   };
 
   const toggleChecklist = async (expedienteId: string, item: any) => {
     const nuevo = !item.completado;
-    await supabase2.rpc("expediente_checklist_tildar", { p_item_id: item.id, p_completado: nuevo });
+    const { error } = await supabase2.rpc("expediente_checklist_tildar", { p_item_id: item.id, p_completado: nuevo });
+    if (error) { alert(`No se pudo guardar el ítem del checklist: ${error.message}`); return; }
     setChecklist((prev) => ({ ...prev, [expedienteId]: prev[expedienteId].map((x) => (x.id === item.id ? { ...x, completado: nuevo } : x)) }));
   };
 

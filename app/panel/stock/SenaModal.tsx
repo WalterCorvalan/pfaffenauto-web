@@ -37,6 +37,7 @@ export default function SenaModal({ vehiculo, miId, cuentas = [], onClose, onGua
       setError("Falta el nombre del cliente.");
       return;
     }
+    if (!cuentaId && Number(monto) > 0 && !confirm("No elegiste cuenta destino: esta seña NO va a figurar como ingreso en Finanzas/Tesorería. ¿Guardar igual?")) return;
     setGuardando(true);
     setError("");
     try {
@@ -62,7 +63,7 @@ export default function SenaModal({ vehiculo, miId, cuentas = [], onClose, onGua
         if (errorMov) {
           alert(`La seña se guardó, pero no se pudo registrar el cobro en Finanzas: ${errorMov.message}. Cargalo a mano.`);
         } else {
-          const { error: errorDatos } = await supabase2.from("movimientos_caja").update({ sena_id: sena.id }).eq("id", movId);
+          const { error: errorDatos } = await supabase2.rpc("completar_movimiento_caja", { p_movimiento_id: movId, p_sena_id: sena.id });
           if (errorDatos) alert(`La seña se guardó y el ingreso quedó en Finanzas, pero no se pudo vincularlo a esta seña (${errorDatos.message}). Avisá a Finanzas.`);
         }
       }

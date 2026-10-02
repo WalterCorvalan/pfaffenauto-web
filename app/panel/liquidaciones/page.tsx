@@ -18,7 +18,7 @@ export default async function LiquidacionesPage() {
   const desde6Meses = new Date();
   desde6Meses.setMonth(desde6Meses.getMonth() - 6);
 
-  const [{ data: liquidaciones }, { data: vendedores }, { data: config }] = await Promise.all([
+  const [{ data: liquidaciones }, { data: vendedores }, { data: config }, { data: cuentas }] = await Promise.all([
     // Una liquidación "en_proceso" puede seguir abierta hace más de 6 meses --
     // solo acotamos por fecha las ya terminadas, nunca las en curso (mismo
     // criterio ya usado en Pedidos esta sesión).
@@ -34,6 +34,8 @@ export default async function LiquidacionesPage() {
       : Promise.resolve({ data: [] }),
     supabase.from("perfiles").select("id, nombre").eq("activo", true).order("nombre"),
     supabase.from("configuracion_empresa").select("liquidaciones_comision_fija, liquidaciones_pct_gestora, liquidaciones_pct_agencia").eq("id", true).maybeSingle(),
+    // Cajas en pesos: "Marcar liquidada" registra el egreso del pago a la gestora (liquidaciones están en ARS).
+    soyAdminOFinanzas ? supabase.from("cuentas").select("id, nombre, moneda").eq("activa", true).eq("moneda", "ARS").order("nombre") : Promise.resolve({ data: [] }),
   ]);
 
   return (
@@ -46,6 +48,7 @@ export default async function LiquidacionesPage() {
       gananciasOcultas={miPerfil?.ganancias_ocultas ?? false}
       liquidacionesIniciales={liquidaciones || []}
       vendedores={vendedores || []}
+      cuentas={cuentas || []}
       config={{ comisionFija: config?.liquidaciones_comision_fija ?? 40000, pctGestora: config?.liquidaciones_pct_gestora ?? 10, pctAgencia: config?.liquidaciones_pct_agencia ?? 90 }}
     />
   );

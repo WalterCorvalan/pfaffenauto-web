@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import DashboardClient from "./DashboardClient";
 import { CATEGORIAS_GASTO_FIJO, CATEGORIAS_GASTO_VARIABLE } from "./finanzas/tabs/shared";
+import { fetchPaginado } from "@/lib/panel/fetchPaginado";
 
 export const metadata = { title: "Dashboard | Pfaffen Cars" };
 
@@ -100,7 +101,8 @@ export default async function PanelV2Home() {
     { count: leadsSinAtenderManuales },
   ] = await Promise.all([
     supabase.from("ventas").select("precio_venta, moneda_venta, estado").gte("fecha_cierre", inicioMes).lte("fecha_cierre", finMes),
-    supabase.from("vehiculos").select("estado"),
+    // Paginado: PostgREST corta en 1000 filas y con los vendidos acumulados el stock ya puede pasarlas.
+    fetchPaginado<{ estado: string }>(() => supabase.from("vehiculos").select("id, estado").order("id")).then((data) => ({ data })),
     supabase.from("clientes").select("id", { count: "exact", head: true }).eq("pipeline_stage", "sin_contactar"),
     supabase.from("cuotas_pagar_agencia").select("id, monto, moneda, concepto, acreedor").gte("vencimiento", inicioMes).lte("vencimiento", finMes).eq("pagada", false),
     supabase.rpc("saldos_totales_por_moneda"),

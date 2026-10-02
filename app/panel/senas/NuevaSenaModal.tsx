@@ -314,10 +314,14 @@ export default function NuevaSenaModal({
           if (errorMov) {
             alert("La seña se guardó, pero no se pudo registrar el cobro en Finanzas. Cargalo a mano.");
           } else {
-            const { error: errorDatos } = await supabase2.from("movimientos_caja").update({
-              sucursal_id: sucursalId, cuit_dni: cliente.dni_cuit, telefono: cliente.telefono, patente: vehiculo.dominio,
-              vendedor_id: vendedorId || user?.id, sena_id: data.id, comprobante_url: comprobanteUrl || null,
-            }).eq("id", movId);
+            // Vía RPC (security definer): un UPDATE directo a movimientos_caja lo
+            // rechaza RLS para vendedores (solo admin/encargado/finanzas) y lo
+            // hacía en silencio -- el movimiento nunca quedaba vinculado a la seña.
+            const { error: errorDatos } = await supabase2.rpc("completar_movimiento_caja", {
+              p_movimiento_id: movId, p_sena_id: data.id, p_sucursal_id: sucursalId || null, p_cuit_dni: cliente.dni_cuit || null,
+              p_telefono: cliente.telefono || null, p_patente: vehiculo.dominio || null, p_vendedor_id: vendedorId || user?.id || null,
+              p_comprobante_url: comprobanteUrl || null,
+            });
             if (errorDatos) {
               // El ingreso YA quedó registrado en Finanzas (el RPC de arriba
               // no falló) -- lo único que no se pudo completar es el vínculo

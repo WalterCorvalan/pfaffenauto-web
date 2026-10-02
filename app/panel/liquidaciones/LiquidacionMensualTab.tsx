@@ -5,9 +5,13 @@ import { ChevronDown, ChevronRight, CheckCircle2 } from "lucide-react";
 import { supabase2 } from "@/lib/supabase/client";
 import { fmt } from "./shared";
 
-export default function LiquidacionMensualTab({ liquidaciones, setLiquidaciones, gananciasOcultas, soyAdminOFinanzas }: { liquidaciones: any[]; setLiquidaciones: (fn: any) => void; gananciasOcultas: boolean; soyAdminOFinanzas: boolean }) {
+export default function LiquidacionMensualTab({ liquidaciones, setLiquidaciones, gananciasOcultas, soyAdminOFinanzas, cuentas }: { liquidaciones: any[]; setLiquidaciones: (fn: any) => void; gananciasOcultas: boolean; soyAdminOFinanzas: boolean; cuentas: { id: string; nombre: string; moneda: string }[] }) {
   const [expandidos, setExpandidos] = useState<Record<string, boolean>>({});
   const [marcando, setMarcando] = useState<string | null>(null);
+  // "Marcar liquidada" = se le pagó a la gestora: pide la caja de donde salió y registra el egreso en Tesorería.
+  const [pagando, setPagando] = useState<{ mes: string; gestora: string | null; total: number } | null>(null);
+  const [cuentaPagoId, setCuentaPagoId] = useState("");
+  const [fechaPago, setFechaPago] = useState(new Date().toISOString().slice(0, 10));
 
   const finalizadas = liquidaciones.filter((l) => l.estado === "terminado");
 
@@ -17,12 +21,13 @@ export default function LiquidacionMensualTab({ liquidaciones, setLiquidaciones,
     return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0]));
   }, [finalizadas]);
 
-  const marcarLiquidada = async (mes: string, gestora: string | null) => {
+  const marcarLiquidada = async (mes: string, gestora: string | null, cuentaId: string | null, fecha: string) => {
     const key = `${mes}::${gestora || ""}`;
     setMarcando(key);
     try {
-      const { error } = await supabase2.rpc("marcar_liquidadas_gestora", { p_mes: `${mes}-01`, p_gestora: gestora });
+      const { error } = await supabase2.rpc("marcar_liquidadas_gestora", { p_mes: `${mes}-01`, p_gestora: gestora, p_cuenta_id: cuentaId, p_fecha: fecha });
       if (error) throw error;
+      setPagando(null);
       setLiquidaciones((prev: any[]) => prev.map((l) => (l.mes.slice(0, 7) === mes && (l.gestora || null) === gestora && l.estado === "terminado" ? { ...l, liquidado_gestora: true, liquidado_gestora_en: new Date().toISOString() } : l)));
     } catch (err: any) {
       alert(err.message || "No se pudo marcar como liquidada.");
@@ -72,7 +77,7 @@ export default function LiquidacionMensualTab({ liquidaciones, setLiquidaciones,
                         <td className="p-2.5 font-mono font-black">{fmt(totalCobrar)}</td>
                         <td className="p-2.5 font-mono font-black">{gananciasOcultas ? "—" : fmt(ingAgencia)}</td>
                         <td className="p-2.5">{todasLiquidadas ? <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700">Liquidada</span> : <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700">Pendiente</span>}</td>
-                        <td className="p-2.5">{soyAdminOFinanzas && !todasLiquidadas && <button onClick={() => marcarLiquidada(mes, g === "__sin_asignar__" ? null : g)} disabled={marcando === key} className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"><CheckCircle2 className="w-3.5 h-3.5" /> Marcar liquidada</button>}</td>
+                        <td className="p-2.5">{soyAdminOFinanzas && !todasLiquidadas && <button onClick={() => { setCuentaPagoId(cuentas[0]?.id || ""); setPagando({ mes, gestora: g === "__sin_asignar__" ? null : g, total: totalCobrar }); }} disabled={marcando === key} className="flex items-center gap-1 px-3 py-1.5 text-[11px] font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"><CheckCircle2 className="w-3.5 h-3.5" /> Marcar liquidada</button>}</td>
                       </tr>
                       {isOpen && fs.map((f) => (
                         <tr key={f.id} className="text-slate-500 border-t border-slate-50 dark:border-white/5">
@@ -107,6 +112,34 @@ export default function LiquidacionMensualTab({ liquidaciones, setLiquidaciones,
           </div>
         );
       })}
+
+      {pagando && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (!marcando) setPagando(null); }}>
+          <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-5">
+            <h3 className="text-base font-bold mb-1">Marcar como liquidada</h3>
+            <p className="text-xs text-slate-400 mb-3">{pagando.gestora || "Sin asignar"} · {new Date(pagando.mes + "-01T12:00:00").toLocaleDateString("es-AR", { month: "long", year: "numeric" })}. Se registra un egreso de <b>{fmt(pagando.total)}</b> en Tesorería.</p>
+            {pagando.total > 0 && (
+              <>
+                <label className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-1 block">Caja de donde sale el pago (ARS)</label>
+                <select value={cuentaPagoId} onChange={(e) => setCuentaPagoId(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm mb-3">
+                  <option value="">— Elegir caja —</option>
+                  {cuentas.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                </select>
+              </>
+            )}
+            <label className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-1 block">Fecha del pago</label>
+            <input type="date" value={fechaPago} onChange={(e) => setFechaPago(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm mb-4" />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setPagando(null)} disabled={!!marcando} className="px-3 py-2 text-xs font-bold border border-slate-200 dark:border-white/10 rounded-lg">Cancelar</button>
+              <button
+                onClick={() => marcarLiquidada(pagando.mes, pagando.gestora, pagando.total > 0 ? cuentaPagoId : null, fechaPago)}
+                disabled={!!marcando || (pagando.total > 0 && !cuentaPagoId)}
+                className="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg disabled:opacity-50"
+              >Confirmar pago</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

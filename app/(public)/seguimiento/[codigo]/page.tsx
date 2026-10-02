@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { CheckCircle2, CarFront, Search, Wallet, MessageCircle, PartyPopper, MapPin, ShieldCheck, FileText, Check, Clock } from "lucide-react";
 import Image from "next/image";
 import { crearAlerta } from "@/lib/panel/alertas";
+import { totalEnMoneda, type Moneda } from "@/lib/moneda";
 import { rateLimit } from "@/lib/rateLimit";
 import { resolverContacto } from "@/lib/panel/contactoVehiculo";
 import DocumentosCliente from "./DocumentosCliente";
@@ -45,7 +46,7 @@ export default async function SeguimientoPublicoPage({ params }: { params: Promi
   }
 
   // Fetch Core Data
-  const { data: venta } = await supabase.from("ventas").select("id, marca:vehiculo_marca, modelo:vehiculo_modelo, vendedor_id, precio_venta, moneda_venta, estado").eq("codigo_seguimiento", codigoUpper).maybeSingle();
+  const { data: venta } = await supabase.from("ventas").select("id, marca:vehiculo_marca, modelo:vehiculo_modelo, vendedor_id, precio_venta, moneda_venta, tipo_cambio, monto_financiacion, estado").eq("codigo_seguimiento", codigoUpper).maybeSingle();
   const { data: sena } = venta ? { data: null } : await supabase.from("senas").select("id, numero, estado, marca, modelo, vendedor_id, vehiculo_id, vehiculo:vehiculo_id ( fotos )").eq("codigo_seguimiento", codigoUpper).maybeSingle();
   const fotoSena = (sena as any)?.vehiculo?.fotos?.[0] || null;
 
@@ -59,11 +60,25 @@ export default async function SeguimientoPublicoPage({ params }: { params: Promi
       hitos = h || [];
     }
 
-    const { data: movimientos } = await supabase.from("movimientos_caja").select("monto, cuenta:cuenta_id(moneda)").eq("venta_id", venta.id).eq("tipo", "ingreso").eq("estado", "aprobado");
+    // Lo que el cliente ya puso: ingresos de caja de ESTA venta (la seña
+    // entra con venta_id cuando se convierte en venta) menos "Gastos cobrados
+    // al comprador" -- esos son un extra aparte del precio, no lo abonan.
+    // Además se descuenta la permuta y lo que financia un banco, que nunca
+    // pasan como ingreso de caja del comprador. Antes esto solo restaba
+    // ingresos con venta_id, así que mostraba el precio casi entero como
+    // "pendiente" a quien ya había señado o entregado un usado.
+    const [{ data: movimientos }, { data: permutas }] = await Promise.all([
+      supabase.from("movimientos_caja").select("monto, tipo_movimiento, cuenta:cuenta_id(moneda)").eq("venta_id", venta.id).eq("tipo", "ingreso").eq("estado", "aprobado").is("deleted_at", null),
+      supabase.from("venta_permutas").select("valor, moneda").eq("venta_id", venta.id),
+    ]);
     const cobrado = (movimientos || [])
-      .filter((m: any) => m.cuenta?.moneda === venta.moneda_venta)
+      .filter((m: any) => m.cuenta?.moneda === venta.moneda_venta && m.tipo_movimiento !== "Gastos cobrados al comprador")
       .reduce((acc: number, m: any) => acc + Number(m.monto), 0);
-    montoPendiente = Math.max(0, Number(venta.precio_venta) - cobrado);
+    const permutaEnMoneda = totalEnMoneda(
+      (permutas || []).map((p: any) => ({ monto: p.valor, moneda: p.moneda as Moneda })),
+      venta.moneda_venta as Moneda, venta.tipo_cambio
+    );
+    montoPendiente = Math.max(0, Number(venta.precio_venta) - cobrado - permutaEnMoneda - Number(venta.monto_financiacion || 0));
   }
 
   // Fetch Sucursal y Vendedor para armar el mapa y contacto

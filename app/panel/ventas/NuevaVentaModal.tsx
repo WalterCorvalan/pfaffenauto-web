@@ -618,7 +618,18 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
       if (dbError) throw dbError;
       if (!venta) throw new Error("No se pudo confirmar el guardado (no se pudo releer la venta actualizada). Verificá permisos y volvé a intentar.");
 
-      await guardarPagoEfectivo(editando.id);
+      // El RPC de efectivo revierte el movimiento anterior y crea uno nuevo en
+      // CADA llamada. Llamarlo en cada edición (aunque no se haya tocado el
+      // efectivo) rehacía el ingreso en Tesorería sin necesidad y, si el mes
+      // de esa venta ya estaba cerrado, hacía fallar la edición entera para
+      // un no-admin (eliminar_movimiento_caja rechaza meses cerrados) cuando
+      // la venta ya se había guardado. Solo se toca la caja si el efectivo cambió.
+      const efectivoCambio =
+        Number(pagoEfectivoArs || 0) !== Number(editando.pago_efectivo_ars || 0) ||
+        Number(pagoEfectivoUsd || 0) !== Number(editando.pago_efectivo_usd || 0) ||
+        (!!pagoEfectivoArs && pagoEfectivoArsCuentaId !== (editando.pago_efectivo_ars_cuenta_id || "")) ||
+        (!!pagoEfectivoUsd && pagoEfectivoUsdCuentaId !== (editando.pago_efectivo_usd_cuenta_id || ""));
+      if (efectivoCambio) await guardarPagoEfectivo(editando.id);
       await guardarPermutas(editando.id, compradorNombre.trim());
 
       if (Object.values(docsComprador).some(Boolean) || Object.values(docsPermutas).some((d) => Object.values(d).some(Boolean))) {
@@ -772,6 +783,10 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
           if (idsVinculados.length > 0) {
             const { error: errorSenas } = await supabase2.from("senas").update({ estado: "Convertida", etapa_seguimiento: "Convertida" }).in("id", idsVinculados);
             if (errorSenas) alert(`La venta y la seña se guardaron, pero no se pudo marcar la seña como Convertida: ${errorSenas.message}. Marcala a mano desde Señas.`);
+            // El ingreso de la seña se cargó sin venta_id (todavía no había venta). Se vincula
+            // acá para que Finanzas, el seguimiento público y los reportes por venta lo vean.
+            const { error: errorVinculoCaja } = await supabase2.rpc("vincular_movimientos_sena_venta", { p_venta_id: venta.id, p_sena_ids: idsVinculados, p_desvincular: false });
+            if (errorVinculoCaja) console.error("No se pudo vincular el ingreso de la seña a la venta:", errorVinculoCaja);
           }
         }
       }

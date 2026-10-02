@@ -223,6 +223,8 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeVerCom
     if (idsSenas.length > 0) {
       const { error: errorSenas } = await supabase2.from("senas").update({ estado: "Activa", etapa_seguimiento: "Activa" }).in("id", idsSenas).eq("estado", "Convertida");
       if (errorSenas) avisos.push(`No se pudieron reabrir las señas vinculadas: ${errorSenas.message}`);
+      // La seña vuelve a ser Activa: su ingreso en caja deja de pertenecer a esta venta cancelada.
+      await supabase2.rpc("vincular_movimientos_sena_venta", { p_venta_id: ventaId, p_sena_ids: idsSenas, p_desvincular: true });
     }
 
     if (avisos.length > 0) alert(`Venta cancelada. Revisá esto:\n\n${avisos.join("\n")}`);
