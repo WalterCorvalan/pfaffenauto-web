@@ -701,6 +701,24 @@ export function VehicleCard({
                achatada (se cortaban las ruedas). sm:h-[240px] es el valor ya
                probado en desktop/tablet, no tocar. */}
             <div className={`relative ${compacta ? "h-[200px]" : "h-[300px]"} sm:h-[240px] bg-gray-100 dark:bg-white/5 overflow-hidden`}>
+              {/* compacta (Pick-ups / catálogo): object-contain para mostrar
+                 el auto completo (sin cortar techo ni paragolpes), pero eso
+                 solo deja "letterbox" a los costados -- un fondo plano ahí se
+                 veía como un cuadrado recortado dentro de la tarjeta. Se
+                 rellena con una copia de la misma foto, de fondo, bien
+                 desenfocada y más grande que el cuadro (cubre entero) --
+                 mismo truco que usan Spotify/Steam para portadas que no
+                 calzan con el marco. */}
+              {compacta && (
+                <Image
+                  src={auto.fotos?.[0] || "/placeholder.jpg"}
+                  alt=""
+                  aria-hidden="true"
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px"
+                  className="object-cover scale-110 blur-xl opacity-70 dark:opacity-40"
+                />
+              )}
               <Image
                 src={auto.fotos?.[0] || "/placeholder.jpg"}
                 alt={`${auto.marca} ${auto.modelo}`}
@@ -709,7 +727,7 @@ export function VehicleCard({
                 priority={prioridad}
                 className={
                   compacta
-                    ? "object-cover object-[center_25%] group-hover:scale-105 transition-transform duration-700 ease-out"
+                    ? "relative z-10 object-contain group-hover:scale-105 transition-transform duration-700 ease-out"
                     : "object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
                 }
               />
