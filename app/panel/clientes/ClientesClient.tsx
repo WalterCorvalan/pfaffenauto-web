@@ -48,8 +48,8 @@ const ORIGEN_COLOR: Record<string, string> = {
   Facebook: "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-100 dark:border-blue-500/20",
   WhatsApp: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-500/20",
   Web: "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-100 dark:border-indigo-500/20",
-  Referido: "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-100 dark:border-amber-500/20",
-  Showroom: "bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-100 dark:border-violet-500/20",
+  MercadoLibre: "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-100 dark:border-amber-500/20",
+  Salón: "bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-100 dark:border-violet-500/20",
 };
 
 function tiempoRelativo(iso: string) {
@@ -516,7 +516,7 @@ export default function ClientesClient({
               <div className="flex flex-wrap items-center gap-3 mb-4">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <button onClick={() => setOrigenFiltro(null)} className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${!origenFiltro ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}>Todos</button>
-                  {["Instagram", "Facebook", "Web", "Referido", "Showroom", "WhatsApp", "Otro"].map((o) => (
+                  {["Instagram", "Facebook", "MercadoLibre", "Rodi", "Messenger", "Web", "Salón", "WhatsApp"].map((o) => (
                     <button key={o} onClick={() => setOrigenFiltro(o)} className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${origenFiltro === o ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}>{o}</button>
                   ))}
                 </div>

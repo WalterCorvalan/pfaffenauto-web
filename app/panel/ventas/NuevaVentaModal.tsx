@@ -503,7 +503,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
 
     const { data: nuevo } = await supabase2.from("clientes").insert({
       nombre: compradorNombre.trim(), telefono: compradorTelefono || null, email: compradorEmail || null, dni_cuit: compradorDni || null,
-      origen: "Showroom", canal_ingreso: "walk_in", pipeline_stage: estadoFinal === "cerrada" ? "cerrado" : "negociacion", pipeline_stage_manual: true,
+      origen: "Salón", canal_ingreso: "walk_in", pipeline_stage: estadoFinal === "cerrada" ? "cerrado" : "negociacion", pipeline_stage_manual: true,
       vendedor_id: vendedorId || null, creado_por: miId || null,
     }).select().single();
     return { id: nuevo?.id || null, creadoNuevo: !!nuevo };

@@ -21,7 +21,9 @@ import { crearAlerta } from "@/lib/panel/alertas";
 // constraint `clientes_origen_check` de la base -- si se agrega otro
 // valor acá, también hay que ampliar ese constraint (ver auditoría de
 // sep-2026, mismo bug que rompía el alta de cliente).
-export const ORIGENES = ["Instagram", "Facebook", "MercadoLibre", "Rodi", "Messenger", "Web", "Referido", "Salón", "WhatsApp", "Otro"];
+// Lista cerrada a pedido de Walter (2/10/2026): solo estos 8 orígenes, ni "Referido" ni "Otro".
+// Tiene que coincidir EXACTO con clientes_origen_check (migraciones/sql_clientes_origen_check.sql).
+export const ORIGENES = ["Instagram", "Facebook", "MercadoLibre", "Rodi", "Messenger", "Web", "Salón", "WhatsApp"];
 const ETAPAS = [
   { value: "sin_contactar", label: "Nuevo" },
   { value: "contactado", label: "Contactado" },
@@ -87,7 +89,7 @@ export default function NuevoClienteModal({ perfiles, disponibilidad, miId, edit
   const [dniCuit, setDniCuit] = useState(editando?.dni_cuit || "");
   const [telefono, setTelefono] = useState(editando?.telefono || "");
   const [email, setEmail] = useState(editando?.email || "");
-  const [origen, setOrigen] = useState(editando?.origen || "Otro");
+  const [origen, setOrigen] = useState(editando?.origen || "Web");
   const [etapa, setEtapa] = useState(editando?.pipeline_stage || "sin_contactar");
   const [vehiculoTexto, setVehiculoTexto] = useState(editando?.vehiculo_interes_texto || "");
   const [vehiculoInteresId, setVehiculoInteresId] = useState<string>(editando?.vehiculo_interes_id || "");
@@ -204,6 +206,8 @@ export default function NuevoClienteModal({ perfiles, disponibilidad, miId, edit
         // reloj del cron de reasignación por timeout — sino un lead recién
         // reasignado a mano puede volver a soltarse solo poco después, porque
         // el cron mide desde created_at si nadie tocó este campo.
+        // Al editar un cliente con origen viejo (ej. "Otro") sin cambiarlo, no se manda: la base rechazaría el UPDATE.
+        ...(esEdicion && origen === editando.origen && !ORIGENES.includes(origen) ? { origen: undefined } : {}),
         ...(esEdicion && vendedorFinal !== editando.vendedor_id ? { ultima_reasignacion_en: new Date().toISOString() } : {}),
       };
 
@@ -301,6 +305,8 @@ export default function NuevoClienteModal({ perfiles, disponibilidad, miId, edit
             <div>
               <label className={labelClass}>Origen / Lead Source</label>
               <select value={origen} onChange={(e) => setOrigen(e.target.value)} className={inputClass}>
+                {/* Cliente viejo con un origen que ya no existe: se muestra tal cual hasta que lo cambien */}
+                {origen && !ORIGENES.includes(origen) && <option value={origen}>{origen} (anterior)</option>}
                 {ORIGENES.map((o) => <option key={o} value={o}>{o}</option>)}
               </select>
             </div>
