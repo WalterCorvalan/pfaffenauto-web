@@ -1,5 +1,6 @@
 "use client";
 
+import AvatarVendedor from "@/components/panel/conversaciones/AvatarVendedor";
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
@@ -154,7 +155,7 @@ export default function RodiBandeja({ conversacionesIniciales, vendedores, miId 
             return (
               <button key={c.id} onClick={() => setSeleccionada(c.id)} className={`w-full text-left p-3.5 border-b border-slate-100 dark:border-white/5 flex gap-3 ${isActive ? "bg-emerald-50 dark:bg-emerald-500/10 border-l-2 border-l-emerald-700" : "hover:bg-slate-50 dark:hover:bg-white/5 border-l-2 border-l-transparent"}`}>
                 <div className="relative shrink-0">
-                  <div className="w-10 h-10 rounded-full bg-slate-600 text-white flex items-center justify-center font-bold text-sm">{iniciales}</div>
+                  <AvatarVendedor vendedorId={c.vendedor_id} nombreRespaldo={c.vendedor?.nombre} clase="w-10 h-10" />
                   <span className={`absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-[#111] ${colorCalificacion(c.calificacion)}`} />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -180,7 +181,7 @@ export default function RodiBandeja({ conversacionesIniciales, vendedores, miId 
           <>
             <div className="h-[60px] bg-white dark:bg-[#111] border-b border-slate-200 dark:border-white/10 flex justify-between items-center px-6 shrink-0 shadow-sm z-10">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-slate-600 flex items-center justify-center font-bold text-white text-xs">{(conversacionActiva?.nombre_contacto || "V").substring(0, 2).toUpperCase()}</div>
+                <AvatarVendedor vendedorId={conversacionActiva?.vendedor_id} nombreRespaldo={conversacionActiva?.vendedor?.nombre} clase="w-9 h-9" claseTexto="text-xs" />
                 <div>
                   <h3 className="font-bold text-[15px] leading-tight">{conversacionActiva?.nombre_contacto || "Visitante anónimo"}</h3>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">{[conversacionActiva?.telefono_contacto, conversacionActiva?.email_contacto].filter(Boolean).join(" · ") || conversacionActiva?.origen_pagina}</p>
@@ -235,7 +236,7 @@ export default function RodiBandeja({ conversacionesIniciales, vendedores, miId 
           </div>
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             <div className="p-6 border-b border-slate-200 dark:border-white/10 flex flex-col items-center text-center">
-              <div className="w-16 h-16 rounded-full bg-slate-600 text-xl font-bold flex items-center justify-center text-white mb-3">{(conversacionActiva?.nombre_contacto || "V").substring(0, 2).toUpperCase()}</div>
+              <div className="mb-3"><AvatarVendedor vendedorId={conversacionActiva?.vendedor_id} nombreRespaldo={conversacionActiva?.vendedor?.nombre} clase="w-16 h-16" claseTexto="text-xl" /></div>
               <h3 className="font-bold text-lg">{conversacionActiva?.nombre_contacto || "Visitante anónimo"}</h3>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{[conversacionActiva?.telefono_contacto, conversacionActiva?.email_contacto].filter(Boolean).join(" · ") || "Sin datos"}</p>
               {conversacionActiva?.origen_pagina && (

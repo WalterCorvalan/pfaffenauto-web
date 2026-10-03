@@ -1,5 +1,6 @@
 "use client";
 
+import AvatarVendedor from "./AvatarVendedor";
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
@@ -299,12 +300,16 @@ export default function ChatClient({
 
   const contactoActivo = resolverContacto(canal, conversacionActiva?.[CAMPO_CONTACTO[canal]]);
 
-  const formatDate = (dateString: string) => new Date(dateString).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
+  const formatDate = (dateString: string) => new Date(dateString).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Argentina/Buenos_Aires" });
+  // Como en WhatsApp: hoy muestra la hora, ayer "Ayer", esta semana el día, más viejo la fecha. Días de calendario en hora de Argentina.
   const formatDay = (dateString: string) => {
-    const difDays = Math.floor((Date.now() - new Date(dateString).getTime()) / 86400000);
-    if (difDays === 0) return "Hoy";
+    const diaAR = (ms: number) => new Date(ms).toLocaleDateString("sv-SE", { timeZone: "America/Argentina/Buenos_Aires" });
+    const ms = new Date(dateString).getTime();
+    const difDays = Math.round((Date.parse(diaAR(Date.now())) - Date.parse(diaAR(ms))) / 86400000);
+    if (difDays <= 0) return new Date(ms).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Argentina/Buenos_Aires" });
     if (difDays === 1) return "Ayer";
-    return `${difDays} días`;
+    if (difDays < 7) { const d = new Date(ms).toLocaleDateString("es-AR", { weekday: "long", timeZone: "America/Argentina/Buenos_Aires" }); return d.charAt(0).toUpperCase() + d.slice(1); }
+    return new Date(ms).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "2-digit", timeZone: "America/Argentina/Buenos_Aires" });
   };
 
   const indexEtapaActual = ETAPAS_PIPELINE.findIndex((e) => e.value === etapaActual);
@@ -489,7 +494,7 @@ export default function ChatClient({
         className={`w-full text-left p-3.5 border-b border-slate-100 dark:border-white/5 transition-all flex gap-3 ${isActive ? "bg-emerald-50 dark:bg-emerald-500/10 border-l-2 border-l-emerald-700 dark:border-l-emerald-400" : "bg-white dark:bg-transparent border-l-2 border-l-transparent hover:bg-slate-50 dark:hover:bg-white/5"}`}
       >
         <div className="relative shrink-0">
-          <div className="w-10 h-10 rounded-full bg-slate-600 text-white flex items-center justify-center font-bold text-sm">{iniciales}</div>
+          <AvatarVendedor vendedorId={c.vendedor_id} nombreRespaldo={c.vendedor?.nombre} clase="w-10 h-10" />
           <span className={`absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-[#111] ${colorCalificacion(c.calificacion)}`} title={c.calificacion || "Sin calificar"} />
           {canal === "whatsapp" && <OrigenBadge canalOrigen={c.canal_origen} />}
         </div>
@@ -588,9 +593,7 @@ export default function ChatClient({
           <>
             <div className={`h-[56px] flex justify-between items-center px-4 shrink-0 shadow-sm z-10 ${noEsWhatsapp ? "bg-white dark:bg-[#111] border-b border-slate-200 dark:border-white/10" : "bg-emerald-700 dark:bg-[#202c33]"}`}>
               <div className="flex items-center gap-3">
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-xs shrink-0 ${noEsWhatsapp ? "bg-gradient-to-tr from-amber-500 via-pink-600 to-purple-600" : "bg-emerald-900/40 dark:bg-white/10"}`}>
-                  {(contactoActivo?.nombre_perfil || contactoActivo?.telefono || "?").substring(0, 2).toUpperCase()}
-                </div>
+                <AvatarVendedor vendedorId={conversacionActiva?.vendedor_id} nombreRespaldo={conversacionActiva?.vendedor?.nombre} clase="w-9 h-9" claseTexto="text-xs" />
                 <div>
                   <h3 className={`font-bold text-[15px] leading-tight ${noEsWhatsapp ? "text-slate-900 dark:text-white" : "text-white"}`}>{contactoActivo?.nombre_perfil || "Cliente"}</h3>
                   <p className={`text-[11px] font-medium ${noEsWhatsapp ? "text-slate-500 dark:text-slate-400" : "text-emerald-100/80"}`}>{contactoActivo?.telefono}</p>
@@ -673,7 +676,7 @@ export default function ChatClient({
                               >
                                 <X className="w-3.5 h-3.5 text-rose-500" />
                               </button>
-                            ) : <Check className={`w-3.5 h-3.5 ${noEsWhatsapp ? "" : "text-blue-500 dark:text-sky-300"}`} />)}
+                            ) : <CheckDeLeido um={m} />)}
                           </div>
                           {canal === "instagram" && m.reaccion && (
                             <span className={`absolute -bottom-2 ${out ? "left-1" : "right-1"} w-5 h-5 rounded-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 shadow flex items-center justify-center text-[11px]`}>
@@ -748,9 +751,7 @@ export default function ChatClient({
             <div className="flex-1 overflow-y-auto custom-scrollbar">
               <div className="p-4 border-b border-slate-200 dark:border-white/10 flex items-center gap-3">
                 <div className="relative shrink-0">
-                  <div className="w-11 h-11 rounded-full bg-slate-600 text-sm font-bold flex items-center justify-center text-white shadow-sm">
-                    {(contactoActivo?.nombre_perfil || contactoActivo?.telefono || "?").substring(0, 2).toUpperCase()}
-                  </div>
+                  <AvatarVendedor vendedorId={conversacionActiva?.vendedor_id} nombreRespaldo={conversacionActiva?.vendedor?.nombre} clase="w-11 h-11" />
                   {canal === "whatsapp" && <OrigenBadge canalOrigen={conversacionActiva?.canal_origen} />}
                 </div>
                 <div className="min-w-0">
