@@ -7,6 +7,7 @@ import { supabase2 } from "@/lib/supabase/client";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import Toggle from "@/components/panel/Toggle";
 import PrimerosPasos from "./PrimerosPasos";
+import SaldoIaConfig from "./SaldoIaConfig";
 import { MODULOS_CATALOGO, SECTORES, SECTOR_LABEL } from "@/lib/panel/modulosCatalogo";
 
 const MODULO_LABEL: Record<string, string> = Object.fromEntries(MODULOS_CATALOGO.map((m) => [m.modulo, m.label]));
@@ -18,7 +19,7 @@ interface PermisoRol { rol: string; otorgado: boolean; }
 const ROL_LABEL: Record<string, string> = { encargado: "Encargado", ventas: "Ventas", finanzas: "Finanzas", gestoria: "Gestoría", director: "Director" };
 
 export default function EmpresaClient() {
-  const [subtab, setSubtab] = useState<"modulos" | "comisiones" | "plazos" | "routing" | "resumen" | "branding">("modulos");
+  const [subtab, setSubtab] = useState<"modulos" | "comisiones" | "plazos" | "routing" | "resumen" | "branding" | "ia">("modulos");
   const [modulos, setModulos] = useState<Modulo[]>([]);
   const [visibilidad, setVisibilidad] = useState<Visibilidad[]>([]);
   const [permisoVerLiquidacion, setPermisoVerLiquidacion] = useState<PermisoRol[]>([]);
@@ -92,6 +93,7 @@ export default function EmpresaClient() {
         <button onClick={() => setSubtab("routing")} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${subtab === "routing" ? "bg-[#0145F2] text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500"}`}>Lead Routing</button>
         <button onClick={() => setSubtab("resumen")} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${subtab === "resumen" ? "bg-[#0145F2] text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500"}`}>Resumen diario</button>
         <button onClick={() => setSubtab("branding")} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${subtab === "branding" ? "bg-[#0145F2] text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500"}`}>Branding</button>
+        <button onClick={() => setSubtab("ia")} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${subtab === "ia" ? "bg-[#0145F2] text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500"}`}>IA</button>
       </div>
 
       {cargando ? (
@@ -154,6 +156,8 @@ export default function EmpresaClient() {
         <LeadRoutingConfig />
       ) : subtab === "resumen" ? (
         <ResumenDiarioConfig />
+      ) : subtab === "ia" ? (
+        <SaldoIaConfig />
       ) : (
         <BrandingConfig />
       )}

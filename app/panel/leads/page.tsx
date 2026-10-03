@@ -37,7 +37,7 @@ export default async function LeadsPage() {
   const [
     { data: whatsapp }, { data: instagram }, { data: messenger }, { data: rodi }, { data: manuales },
     { data: vendedores }, { data: sucursales }, { data: miPerfil },
-    direccionWA, direccionIG, direccionMSG, direccionRodi, ventasCerradas,
+    direccionWA, direccionIG, direccionMSG, direccionRodi,
   ] = await Promise.all([
     supabase.from("whatsapp_conversaciones").select("id, vendedor_id, calificacion, estado_lead, canal_origen, sucursal_id, created_at, last_message_at, es_basura, whatsapp_contactos ( nombre_perfil, telefono )").order("last_message_at", { ascending: false }).limit(1000),
     supabase.from("instagram_conversaciones").select("id, vendedor_id, calificacion, estado_lead, canal_origen, sucursal_id, created_at, last_message_at, es_basura, instagram_contactos ( username, ig_user_id )").order("last_message_at", { ascending: false }).limit(1000),
@@ -51,9 +51,6 @@ export default async function LeadsPage() {
     ultimaDireccionPorConversacion(supabase, "instagram_mensajes"),
     ultimaDireccionPorConversacion(supabase, "messenger_mensajes"),
     ultimaDireccionPorConversacion(supabase, "rodi_mensajes"),
-    // Ventas cerradas de TODO el historial (no solo el mes): alimentan el "Cierre" del Ranking de Leads. Una venta no está atada a un lead
-    // (el cliente puede haber entrado por salón), por eso se cuenta por vendedor y no lead por lead.
-    fetchPaginado<{ vendedor_id: string | null; fecha_cierre: string | null }>(() => supabase.from("ventas").select("id, vendedor_id, fecha_cierre").eq("estado", "cerrada").order("id")),
   ]);
 
   // Se normaliza cada fuente a la misma forma para poder listarlas/filtrarlas
@@ -76,6 +73,11 @@ export default async function LeadsPage() {
   const soyEncargado = miPerfil?.roles?.includes("encargado") ?? false;
   const miSucursalId = miPerfil?.sucursal_id ?? null;
   const vendedoresLista = filtrarVendedoresAsignables(vendedores || [], { soyAdmin, soyEncargado, miSucursalId });
+  // El Ranking de Leads (con las ventas por vendedor) es solo para admin y encargado: a un vendedor no se le piden ni se le mandan esos datos.
+  // Ventas cerradas de TODO el historial: alimentan el "Cierre". Una venta no está atada a un lead (puede venir del salón), por eso se cuenta por vendedor.
+  const ventasCerradas = soyAdmin || soyEncargado
+    ? await fetchPaginado<{ vendedor_id: string | null; fecha_cierre: string | null }>(() => supabase.from("ventas").select("id, vendedor_id, fecha_cierre").eq("estado", "cerrada").order("id"))
+    : [];
   const leadsVisibles = filtrarPorVendedorAsignado(normalizados, { soyAdmin, soyEncargado, miId: user?.id || "" });
 
   return (

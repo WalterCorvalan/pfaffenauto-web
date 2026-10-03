@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
+import GerenteChat from "@/components/panel/GerenteChat";
 import Link from "next/link";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import {
@@ -22,12 +23,11 @@ interface Props {
   cierreMesAnterior: { autos: number; mejorVendedor: string | null; multasArs: number };
   calificaciones: { promedio: number | null; distribucion: number[]; pedidasSinResponder: number; total: number };
   gestoriaPorMoneda: Record<string, number>;
-  gananciaPorMes: { mes: string; monto: number }[];
-  resumenAnual: { anio: number; autos: number; usd: number }[];
-  tuOperacion: { ventas: number; usd: number; consignacionesAno: number };
+  gananciaPorMes: { mes: string; monto: number; montoArs: number }[];
+  resumenAnual: { anio: number; autos: number; usd: number; ars: number }[];
+  tuOperacion: { ventas: number; usd: number; ars: number; consignacionesAno: number };
 }
 
-const PREGUNTAS_RAPIDAS = ["¿Qué debería atacar hoy?", "¿Cómo venimos con el stock parado?", "¿Hay leads calientes sin contactar?", "¿Qué comisiones están trabadas?"];
 
 function fmtMoneda(n: number, moneda: string) {
   return moneda === "ARS" ? `$ ${Math.round(n).toLocaleString("es-AR")}` : `${moneda} ${Math.round(n).toLocaleString("es-AR")}`;
@@ -43,13 +43,7 @@ function MiniStat({ label, valor, sub }: { label: string; valor: React.ReactNode
 }
 
 export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, diasEnElMes, ventasDelMes, ventasMesAnterior, objetivoVentasMensual, consignacionesDelMes, ranking, cierreMesAnterior, calificaciones, gananciaPorMes, resumenAnual, tuOperacion }: Props) {
-  const [mensajes, setMensajes] = useState<{ role: "user" | "assistant"; content: string; link?: string | null }[]>([]);
-  const [pregunta, setPregunta] = useState("");
-  const [cargando, setCargando] = useState(false);
-  const [error, setError] = useState("");
-  const finRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => { finRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, [mensajes]);
+  const [monedaGanancia, setMonedaGanancia] = useState<"USD" | "ARS">("USD");
 
   // Reemplaza "Ganancia del mes" (antes solo precio venta − precio
   // propietario, sin restar comisión ni gastos) y "Gestoría/Transferencias"
@@ -84,80 +78,13 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
   const { ingresos: ingresosAreaMes, egresos: egresosAreaMes } = ingresosEgresosOperatoriaAreaPorMoneda(movimientosAreaMes);
   const operatoriaAreaMonedas = Array.from(new Set([...Object.keys(ingresosAreaMes), ...Object.keys(egresosAreaMes)]));
 
-  const enviar = async (texto: string) => {
-    if (!texto.trim() || cargando) return;
-    const nuevoHistorial = [...mensajes, { role: "user" as const, content: texto }];
-    setMensajes(nuevoHistorial);
-    setPregunta("");
-    setCargando(true);
-    setError("");
-    try {
-      const res = await fetch("/api/panel/gerente/preguntar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pregunta: texto, historial: nuevoHistorial }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "No se pudo responder.");
-      setMensajes((prev) => [...prev, { role: "assistant", content: data.reply, link: data.link }]);
-    } catch (e: any) {
-      setError(e.message || "Error al preguntar.");
-    } finally {
-      setCargando(false);
-    }
-  };
-
   const avancePct = Math.round((diaDelMes / diasEnElMes) * 100);
   const variacionAnual = ventasMesAnterior > 0 ? Math.round(((ventasDelMes - ventasMesAnterior) / ventasMesAnterior) * 100) : null;
   const totalEstrellas = calificaciones.distribucion.reduce((a, b) => a + b, 0) || 1;
 
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl p-5 bg-gradient-to-br from-indigo-700 via-violet-700 to-indigo-900 text-white">
-        <div className="flex items-start gap-3 mb-3">
-          <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center shrink-0"><Sparkles className="w-5 h-5" /></div>
-          <div>
-            <p className="font-black">Preguntale al gerente</p>
-            <p className="text-xs text-indigo-200">Mira los números de hoy y te dice qué conviene hacer. (Sin búsqueda de mercado todavía — solo datos del CRM.)</p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2 mb-3">
-          {PREGUNTAS_RAPIDAS.map((p) => (
-            <button key={p} onClick={() => enviar(p)} disabled={cargando} className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-xs font-semibold disabled:opacity-50">{p}</button>
-          ))}
-        </div>
-
-        {mensajes.length > 0 && (
-          <div className="bg-white/10 rounded-xl p-3 mb-3 max-h-72 overflow-y-auto space-y-3">
-            {mensajes.map((m, i) => (
-              <div key={i} className={m.role === "user" ? "text-right" : ""}>
-                <div className={`inline-block max-w-[85%] px-3 py-2 rounded-xl text-sm ${m.role === "user" ? "bg-white text-indigo-900" : "bg-indigo-950/40 text-white"}`}>
-                  {m.content}
-                  {m.link && <Link href={m.link} className="block mt-1.5 text-xs font-bold underline">Ir ahora →</Link>}
-                </div>
-              </div>
-            ))}
-            <div ref={finRef} />
-          </div>
-        )}
-
-        {error && <p className="text-xs text-rose-200 mb-2">{error}</p>}
-
-        <div className="flex gap-2">
-          <textarea
-            value={pregunta}
-            onChange={(e) => setPregunta(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); enviar(pregunta); } }}
-            placeholder="Escribí tu pregunta... (ej: ¿qué autos bajo de precio?)"
-            rows={2}
-            className="flex-1 rounded-xl bg-white text-slate-900 px-3 py-2.5 text-sm outline-none resize-none"
-          />
-          <button onClick={() => enviar(pregunta)} disabled={cargando || !pregunta.trim()} className="px-4 rounded-xl bg-rose-500 hover:bg-[#0145F2] text-white font-bold text-sm disabled:opacity-50 flex items-center gap-1.5 shrink-0">
-            {cargando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Enviar
-          </button>
-        </div>
-      </div>
+      <GerenteChat />
 
       <div className="rounded-2xl p-5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white flex items-center justify-between">
         <div>
@@ -231,13 +158,18 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 shadow-[0_2px_10px_rgba(15,23,42,0.06)] dark:shadow-[0_2px_14px_rgba(0,0,0,0.45)]">
-          <p className="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-indigo-500" /> Ganancia últimos 12 meses (USD)</p>
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <p className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-indigo-500" /> Ganancia últimos 12 meses ({monedaGanancia})</p>
+            <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-white/10 rounded-lg p-0.5">
+              {(["USD", "ARS"] as const).map((m) => (<button key={m} onClick={() => setMonedaGanancia(m)} className={`px-2 py-0.5 text-[10px] font-bold rounded-md ${monedaGanancia === m ? "bg-white dark:bg-white/20 text-slate-900 dark:text-white shadow-sm" : "text-slate-500"}`}>{m}</button>))}
+            </div>
+          </div>
           <div className="h-[160px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={gananciaPorMes}>
+              <BarChart data={gananciaPorMes.map((g) => ({ mes: g.mes, monto: monedaGanancia === "USD" ? g.monto : g.montoArs }))}>
                 <XAxis dataKey="mes" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} width={40} tickFormatter={(v) => new Intl.NumberFormat("es-AR", { notation: "compact" }).format(v)} />
-                <Tooltip formatter={(v: any) => [`USD ${Number(v).toLocaleString("es-AR")}`, "Ganancia"]} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                <Tooltip formatter={(v: any) => [`${monedaGanancia === "USD" ? "USD" : "$"} ${Number(v).toLocaleString("es-AR")}`, "Ganancia"]} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
                 <Bar dataKey="monto" fill="#6366f1" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -252,6 +184,7 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
                 <p className="text-[10px] font-bold text-slate-400">{r.anio}{r.anio === new Date().getFullYear() ? " · en curso" : ""}</p>
                 <p className="text-lg font-black text-slate-900 dark:text-white">{r.autos} <span className="text-[10px] font-bold text-slate-400 uppercase">autos</span></p>
                 <p className={`text-xs font-bold text-slate-500 ${ocultarMontos ? "blur-sm select-none" : ""}`}>USD {r.usd.toLocaleString("es-AR")}</p>
+                <p className={`text-xs font-bold text-slate-500 ${ocultarMontos ? "blur-sm select-none" : ""}`}>$ {r.ars.toLocaleString("es-AR")}</p>
               </div>
             ))}
           </div>
@@ -267,7 +200,8 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
           </div>
           <div className="text-right">
             <p className={`text-lg font-black text-violet-600 dark:text-violet-400 ${ocultarMontos ? "blur-sm select-none" : ""}`}>USD {tuOperacion.usd.toLocaleString("es-AR")}</p>
-            <p className="text-[9px] text-slate-400">solo ventas en USD</p>
+            <p className={`text-lg font-black text-violet-600 dark:text-violet-400 ${ocultarMontos ? "blur-sm select-none" : ""}`}>$ {tuOperacion.ars.toLocaleString("es-AR")}</p>
+            <p className="text-[9px] text-slate-400">ventas por moneda, sin mezclar</p>
           </div>
         </div>
       </div>

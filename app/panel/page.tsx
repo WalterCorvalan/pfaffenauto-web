@@ -339,20 +339,24 @@ export default async function PanelV2Home({ searchParams }: { searchParams: Prom
   (extraCobradoMes || []).forEach((v: any) => { gestoriaPorMoneda[v.extra_cobrado_moneda] = (gestoriaPorMoneda[v.extra_cobrado_moneda] || 0) + Number(v.extra_cobrado_monto); });
 
   // Ganancia últimos 12 meses (por mes, USD priorizado ya que es la moneda dominante de venta)
-  const gananciaPorMes: { mes: string; monto: number }[] = [];
+  const gananciaPorMes: { mes: string; monto: number; montoArs: number }[] = [];
   {
     const porMes = new Map<string, number>();
+    const porMesArs = new Map<string, number>();
     (ventasUltimos12Meses || []).forEach((e: any) => {
       const venta = Array.isArray(e.venta) ? e.venta[0] : e.venta;
-      if (!venta || venta.moneda_venta !== "USD" || e.precio_propietario_moneda !== "USD") return;
+      // Nunca se resta una moneda de otra: solo cuenta si la venta y el precio del propietario están en la misma moneda.
+      if (!venta || venta.moneda_venta !== e.precio_propietario_moneda) return;
+      const destino = venta.moneda_venta === "USD" ? porMes : venta.moneda_venta === "ARS" ? porMesArs : null;
+      if (!destino) return;
       const mes = venta.fecha_cierre?.slice(0, 7);
       if (!mes) return;
-      porMes.set(mes, (porMes.get(mes) || 0) + (Number(venta.precio_venta) - Number(e.precio_propietario)));
+      destino.set(mes, (destino.get(mes) || 0) + (Number(venta.precio_venta) - Number(e.precio_propietario)));
     });
     for (let i = 11; i >= 0; i--) {
       const d = new Date(mesRef.getFullYear(), mesRef.getMonth() - i, 1, 12);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      gananciaPorMes.push({ mes: d.toLocaleDateString("es-AR", { month: "short", year: "2-digit" }), monto: Math.round(porMes.get(key) || 0) });
+      gananciaPorMes.push({ mes: d.toLocaleDateString("es-AR", { month: "short", year: "2-digit" }), monto: Math.round(porMes.get(key) || 0), montoArs: Math.round(porMesArs.get(key) || 0) });
     }
   }
 
@@ -382,14 +386,16 @@ export default async function PanelV2Home({ searchParams }: { searchParams: Prom
   // es sensible, se deja igual.
   const resumenAnual = [hoy.getFullYear() - 2, hoy.getFullYear() - 1, hoy.getFullYear()].map((anio) => {
     const delAno = (ventasPorAno || []).filter((v: any) => v.fecha_cierre?.startsWith(String(anio)));
-    if (!esAdmin) return { anio, autos: delAno.length, usd: 0 };
+    if (!esAdmin) return { anio, autos: delAno.length, usd: 0, ars: 0 };
     const usd = delAno.filter((v: any) => v.moneda_venta === "USD").reduce((a: number, v: any) => a + Number(v.precio_venta), 0);
-    return { anio, autos: delAno.length, usd: Math.round(usd) };
+    const ars = delAno.filter((v: any) => v.moneda_venta === "ARS").reduce((a: number, v: any) => a + Number(v.precio_venta), 0);
+    return { anio, autos: delAno.length, usd: Math.round(usd), ars: Math.round(ars) };
   });
 
   // Tu operación (vendedor logueado, en el año)
   const misVentasAno = ventasVendedorAno || [];
   const misVentasUsd = misVentasAno.filter((v: any) => v.moneda_venta === "USD").reduce((a: number, v: any) => a + Number(v.precio_venta), 0);
+  const misVentasArs = misVentasAno.filter((v: any) => v.moneda_venta === "ARS").reduce((a: number, v: any) => a + Number(v.precio_venta), 0);
 
   // Clientes que ingresaron
   const canalConteo: Record<string, number> = {};
@@ -547,7 +553,7 @@ export default async function PanelV2Home({ searchParams }: { searchParams: Prom
         totalPorMoneda: cuotasPagarPorMoneda, cantidadDelMes: (cuotasPagarMes || []).length, vencidas: cuotasPagarVencidasCount ?? 0,
       }}
       resumenAnual={resumenAnual}
-      tuOperacion={{ ventas: misVentasAno.length, usd: Math.round(misVentasUsd), consignacionesAno: consignacionesVendedorAno ?? 0 }}
+      tuOperacion={{ ventas: misVentasAno.length, usd: Math.round(misVentasUsd), ars: Math.round(misVentasArs), consignacionesAno: consignacionesVendedorAno ?? 0 }}
       clientesIngresadosHoy={clientesIngresados?.length ?? 0}
       clientesUltimos7dias={clientesUltimos7diasCount ?? 0}
       canalTop={canalTop}

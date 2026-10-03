@@ -1,6 +1,7 @@
 import { z } from "zod";
 import Anthropic from "@anthropic-ai/sdk";
 import { registrarUsoAnthropicV2 } from "./usageLoggerV2";
+import { avisarSaldoAgotado } from "./saldoIa";
 
 // Fork de lib/ai/index.ts para panel-v2 — mismo motor (Claude Haiku, con
 // respaldo OpenRouter), pero el conteo de uso va a la base nova, no a v1.
@@ -84,6 +85,8 @@ export async function chatJsonV2<T>(
         return { ok: true, data: validated };
       } catch (err) {
         lastError = err instanceof Error ? err.message : "Error desconocido";
+        // Anthropic rechaza con "credit balance is too low" cuando se acabó el saldo: aviso real a los admin (no repite por 6 hs).
+        if (proveedor === "anthropic" && /credit balance|billing|insufficient (funds|credit)/i.test(lastError)) avisarSaldoAgotado();
       }
     }
   }

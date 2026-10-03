@@ -3,10 +3,13 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { chatJsonV2, isAiConfiguredV2 } from "@/lib/ai/indexV2";
 import { registrarError } from "@/lib/panel/logger";
+import { fetchPaginado } from "@/lib/panel/fetchPaginado";
 
+// "acciones": hasta 3 botones que llevan a la pantalla donde se actúa (el "link" viejo sigue aceptado por si el modelo lo manda).
 const RespuestaSchema = z.object({
   reply: z.string(),
-  link: z.string().nullable(),
+  link: z.string().nullable().optional(),
+  acciones: z.array(z.object({ texto: z.string(), link: z.string() })).optional().default([]),
 });
 
 // Rutas reales de /panel -- el modelo tiende a inventar secciones que
@@ -42,9 +45,15 @@ export async function POST(request: Request) {
   const { pregunta, historial } = await request.json();
   if (!pregunta || typeof pregunta !== "string") return NextResponse.json({ error: "Falta la pregunta." }, { status: 400 });
 
-  const hoy = new Date();
-  const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().slice(0, 10);
-  const finMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).toISOString().slice(0, 10);
+  // "Hoy" y el mes en hora de Argentina (UTC-3): el servidor corre en UTC y de noche ya era "mañana" para él.
+  const ahoraAR = new Date(Date.now() - 3 * 3600000);
+  const hoyStr = ahoraAR.toISOString().slice(0, 10);
+  const anioAR = ahoraAR.getUTCFullYear();
+  const mesAR = ahoraAR.getUTCMonth();
+  const claveMes = (a: number, m: number) => `${a}-${String(m + 1).padStart(2, "0")}`;
+  const inicioMes = `${claveMes(anioAR, mesAR)}-01`;
+  const finMes = new Date(Date.UTC(anioAR, mesAR + 1, 0)).toISOString().slice(0, 10);
+  const mesesAtras = (n: number) => { const d = new Date(Date.UTC(anioAR, mesAR - n, 1)); return claveMes(d.getUTCFullYear(), d.getUTCMonth()); };
 
   const [
     { data: ventasMes },
@@ -77,7 +86,7 @@ export async function POST(request: Request) {
     { data: peritajesLead },
   ] = await Promise.all([
     supabase.from("ventas").select("precio_venta, moneda_venta, estado, vehiculo_marca, vehiculo_modelo, vendedor_id").gte("fecha_cierre", inicioMes).lte("fecha_cierre", finMes),
-    supabase.from("vehiculos").select("estado"),
+    fetchPaginado<{ estado: string; marca: string | null; modelo: string | null; anio: number | null; precio_venta: number | null; moneda_venta: string | null; created_at: string }>(() => supabase.from("vehiculos").select("id, estado, marca, modelo, anio, precio_venta, moneda_venta, created_at").order("id")).then((data) => ({ data })),
     supabase.from("clientes").select("id", { count: "exact", head: true }).eq("pipeline_stage", "sin_contactar"),
     supabase.from("comisiones").select("estado, monto, moneda").eq("estado", "pendiente"),
     supabase.from("infracciones").select("estado").eq("estado", "Pendiente"),
@@ -90,7 +99,7 @@ export async function POST(request: Request) {
     // responder con TODO lo que hay en el sistema, no solo el recorte del
     // mes en curso -- así que además del snapshot mensual se suma el
     // histórico completo de ventas cerradas por vendedor.
-    supabase.from("ventas").select("vendedor_id").eq("estado", "cerrada"),
+    fetchPaginado<{ vendedor_id: string | null; fecha_cierre: string | null; precio_venta: number | null; moneda_venta: string | null }>(() => supabase.from("ventas").select("id, vendedor_id, fecha_cierre, precio_venta, moneda_venta").eq("estado", "cerrada").order("id")).then((data) => ({ data })),
     // Pedido explícito 24/9: "el gerente" tiene que conocer TODOS los
     // módulos del panel, no solo ventas/stock/finanzas -- se suma un
     // resumen liviano (conteos, no filas completas) de cada módulo que
@@ -115,12 +124,78 @@ export async function POST(request: Request) {
     // "no tengo ese dato" aunque la info sí estuviera en la base.
     supabase.from("rodi_conversaciones").select("estado_lead, vendedor_id, handoff_at, ai_habilitada"),
     supabase.from("messenger_conversaciones").select("estado_lead, vendedor_id, handoff_at, ai_habilitada"),
-    supabase.from("leads_manuales").select("estado_lead"),
+    supabase.from("leads_manuales").select("estado_lead, vendedor_id"),
     supabase.from("taller_ordenes").select("estado"),
     supabase.from("reclamos").select("estado"),
     supabase.from("telefonos_utiles").select("id", { count: "exact", head: true }),
     supabase.from("peritajes_lead").select("estado"),
   ]);
+
+  // ---- Datos extra: evolución, patrimonio, caja, cobros y pagos, stock y rendimiento por vendedor ----
+  const [{ data: fotosPatrimonio }, { data: cuentasActivas }, { data: cuotasCobrar }, { data: cuotasPagar }] = await Promise.all([
+    supabase.from("patrimonio_fotos").select("fecha, moneda, patrimonio_costo, patrimonio_venta, cuentas, stock_costo, stock_venta, a_cobrar, a_pagar").order("fecha", { ascending: false }).limit(800),
+    supabase.from("cuentas").select("id, nombre, moneda").eq("activa", true),
+    supabase.from("cuotas_cobrar_clientes").select("monto, monto_cobrado, moneda, vencimiento").eq("cobrada", false),
+    supabase.from("cuotas_pagar_agencia").select("monto, moneda, vencimiento").eq("pagada", false),
+  ]);
+  const saldoPorCuenta = await Promise.all((cuentasActivas || []).map(async (c) => {
+    const { data: saldo } = await supabase.rpc("saldo_cuenta", { p_cuenta_id: c.id });
+    return { cuenta: c.nombre, moneda: c.moneda, saldo: Number(saldo) || 0 };
+  }));
+
+  // Ventas cerradas por mes (últimos 7) con cantidad y facturación por moneda: sirve para "cómo venimos vs el mes pasado".
+  const ventasPorMes: Record<string, { cantidad: number; facturacion_por_moneda: Record<string, number> }> = {};
+  for (let i = 6; i >= 0; i--) ventasPorMes[mesesAtras(i)] = { cantidad: 0, facturacion_por_moneda: {} };
+  (ventasHistoricas || []).forEach((v) => {
+    const m = v.fecha_cierre?.slice(0, 7);
+    if (!m || !ventasPorMes[m]) return;
+    ventasPorMes[m].cantidad += 1;
+    const mon = v.moneda_venta || "ARS";
+    ventasPorMes[m].facturacion_por_moneda[mon] = (ventasPorMes[m].facturacion_por_moneda[mon] || 0) + Number(v.precio_venta || 0);
+  });
+
+  // Patrimonio de la agencia: hoy y diferencia contra ayer / semana / mes / año (una moneda a la vez, nunca mezcladas).
+  const restarDiasStr = (dia: string, n: number) => { const d = new Date(`${dia}T12:00:00Z`); d.setUTCDate(d.getUTCDate() - n); return d.toISOString().slice(0, 10); };
+  const restarMesesStr = (dia: string, n: number) => { const d = new Date(`${dia}T12:00:00Z`); const dd = d.getUTCDate(); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() - n); d.setUTCDate(Math.min(dd, new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate())); return d.toISOString().slice(0, 10); };
+  const patrimonio: Record<string, unknown> = {};
+  ["ARS", "USD"].forEach((mon) => {
+    const fotos = (fotosPatrimonio || []).filter((x) => x.moneda === mon);
+    const actual = fotos[0];
+    if (!actual) return;
+    const contra = (objetivo: string) => {
+      const previa = fotos.find((x) => x.fecha <= objetivo && x.fecha < actual.fecha);
+      if (!previa) return "sin datos todavía (las fotos diarias empezaron el 3/10/2026)";
+      return { fecha_comparada: previa.fecha, dif_a_costo: Math.round(Number(actual.patrimonio_costo) - Number(previa.patrimonio_costo)), dif_a_precio_de_venta: Math.round(Number(actual.patrimonio_venta) - Number(previa.patrimonio_venta)) };
+    };
+    patrimonio[mon] = {
+      foto_del: actual.fecha, a_costo: Math.round(Number(actual.patrimonio_costo)), a_precio_de_venta: Math.round(Number(actual.patrimonio_venta)),
+      componentes: { cuentas: Math.round(Number(actual.cuentas)), stock_a_costo: Math.round(Number(actual.stock_costo)), stock_a_precio_de_venta: Math.round(Number(actual.stock_venta)), a_cobrar: Math.round(Number(actual.a_cobrar)), a_pagar: Math.round(Number(actual.a_pagar)) },
+      vs_ayer: contra(restarDiasStr(actual.fecha, 1)), vs_semana_anterior: contra(restarDiasStr(actual.fecha, 7)), vs_mes_anterior: contra(restarMesesStr(actual.fecha, 1)), vs_ano_anterior: contra(restarMesesStr(actual.fecha, 12)),
+    };
+  });
+
+  // Cobros y pagos pendientes por moneda, separando lo vencido.
+  const resumenCuotas = (filas: { monto: number; monto_cobrado?: number | null; moneda: string; vencimiento: string }[] | null) => {
+    const out: Record<string, { pendiente: number; vencido: number; cantidad: number; cantidad_vencidas: number }> = {};
+    (filas || []).forEach((c) => {
+      const o = (out[c.moneda] = out[c.moneda] || { pendiente: 0, vencido: 0, cantidad: 0, cantidad_vencidas: 0 });
+      const resto = Number(c.monto) - Number(c.monto_cobrado || 0);
+      o.pendiente += resto; o.cantidad += 1;
+      if (c.vencimiento < hoyStr) { o.vencido += resto; o.cantidad_vencidas += 1; }
+    });
+    Object.values(out).forEach((o) => { o.pendiente = Math.round(o.pendiente); o.vencido = Math.round(o.vencido); });
+    return out;
+  };
+
+  // Stock: valor a precio de venta por moneda y los autos más viejos.
+  const enStock = (stockPorEstado || []).filter((v) => ["disponible", "reservado", "señado", "en_preparacion"].includes(v.estado));
+  const valorStockPorMoneda: Record<string, number> = {};
+  enStock.forEach((v) => { const mon = v.moneda_venta || "ARS"; valorStockPorMoneda[mon] = (valorStockPorMoneda[mon] || 0) + Number(v.precio_venta || 0); });
+  const stockMasViejo = (stockPorEstado || [])
+    .filter((v) => v.estado === "disponible")
+    .map((v) => ({ auto: [v.marca, v.modelo, v.anio].filter(Boolean).join(" "), dias_en_stock: Math.floor((Date.now() - new Date(v.created_at).getTime()) / 86400000), precio: v.precio_venta ? `${v.moneda_venta === "USD" ? "USD" : "$"} ${Number(v.precio_venta).toLocaleString("es-AR")}` : "sin precio" }))
+    .sort((a, b) => b.dias_en_stock - a.dias_en_stock)
+    .slice(0, 12);
 
   const ventasCerradas = (ventasMes || []).filter((v) => v.estado === "cerrada");
   const revenuePorMoneda: Record<string, number> = {};
@@ -148,6 +223,22 @@ export async function POST(request: Request) {
     ventasHistoricasPorVendedor[nombre] = (ventasHistoricasPorVendedor[nombre] || 0) + 1;
   });
 
+  // Rendimiento por vendedor: leads recibidos (todos los canales), sin contactar y ventas cerradas. "Cierre" = ventas históricas / leads.
+  const leadsPorVendedor: Record<string, { leads: number; sin_contactar: number }> = {};
+  [whatsappConversaciones, instagramConversaciones, rodiConversaciones, messengerConversaciones, leadsManuales].forEach((lista) => {
+    ((lista || []) as { estado_lead: string | null; vendedor_id: string | null }[]).forEach((c) => {
+      const nombre = c.vendedor_id ? (nombrePorVendedorId[c.vendedor_id] || "Sin nombre") : "Sin asignar";
+      const o = (leadsPorVendedor[nombre] = leadsPorVendedor[nombre] || { leads: 0, sin_contactar: 0 });
+      o.leads += 1;
+      if (!c.estado_lead || c.estado_lead === "nuevo") o.sin_contactar += 1;
+    });
+  });
+  const rendimientoVendedores = Object.entries(leadsPorVendedor).map(([nombre, l]) => ({
+    vendedor: nombre, leads_recibidos: l.leads, leads_sin_contactar: l.sin_contactar,
+    ventas_del_mes: ventasPorVendedor[nombre] || 0, ventas_historicas: ventasHistoricasPorVendedor[nombre] || 0,
+    cierre_historico_pct: l.leads > 0 && nombre !== "Sin asignar" ? Math.round(((ventasHistoricasPorVendedor[nombre] || 0) / l.leads) * 100) : null,
+  })).sort((a, b) => b.ventas_historicas - a.ventas_historicas);
+
   const contarPorEstado = (filas: { estado: string | null }[] | null) => {
     const acc: Record<string, number> = {};
     (filas || []).forEach((f) => { const k = f.estado || "sin_estado"; acc[k] = (acc[k] || 0) + 1; });
@@ -167,7 +258,15 @@ export async function POST(request: Request) {
   liquidacionesPendientes.forEach((l) => { totalSueldosPendientesPorMoneda[l.moneda_total] = (totalSueldosPendientesPorMoneda[l.moneda_total] || 0) + Number(l.total_final); });
 
   const snapshot = {
-    hoy: hoy.toISOString().slice(0, 10),
+    hoy: hoyStr,
+    ventas_por_mes_ultimos_7_meses: ventasPorMes,
+    patrimonio_de_la_agencia: patrimonio,
+    saldo_por_cuenta: saldoPorCuenta,
+    cobros_pendientes_de_clientes_por_moneda: resumenCuotas(cuotasCobrar),
+    pagos_pendientes_de_la_agencia_por_moneda: resumenCuotas(cuotasPagar),
+    stock_valor_a_precio_de_venta_por_moneda: valorStockPorMoneda,
+    stock_disponible_mas_viejo: stockMasViejo,
+    rendimiento_por_vendedor: rendimientoVendedores,
     ventas_del_mes: ventasCerradas.length,
     ventas_del_mes_por_vendedor: ventasPorVendedor,
     ventas_totales_historicas_por_vendedor: ventasHistoricasPorVendedor,
@@ -182,7 +281,7 @@ export async function POST(request: Request) {
     saldos_de_caja: saldos || [],
     senas_por_estado: contarPorEstado(senas),
     visitas_por_estado: contarPorEstado(visitas),
-    visitas_pendientes_proximas: (visitas || []).filter((v) => v.estado === "Pendiente" && v.fecha_visita >= hoy.toISOString().slice(0, 10)).length,
+    visitas_pendientes_proximas: (visitas || []).filter((v) => v.estado === "Pendiente" && v.fecha_visita >= hoyStr).length,
     consignaciones_por_estado: contarPorEstado(consignaciones),
     postventa_recordatorios_pendientes: (postventaRecordatorios || []).filter((r) => r.estado === "pendiente").length,
     alertas_sin_leer_del_admin_que_pregunta: alertasSinLeer ?? 0,
@@ -200,16 +299,35 @@ export async function POST(request: Request) {
     peritajes_lead_por_estado: contarPorEstado(peritajesLead),
   };
 
-  const systemMsg = `Sos "el gerente", un asistente que ayuda al dueño/admin de Pfaffen Cars (concesionaria) a entender el estado del negocio.
-Respondé SIEMPRE en español rioplatense, con un tono profesional y serio — como un gerente real informando al dueño, directo y sin vueltas, sin informalidades ni onda de chat casual (nada de "che", emojis de más, ni comentarios de relleno) — basándote ÚNICAMENTE en estos datos reales del CRM (no inventes números):
+  const rutas = [...RUTAS_PANEL_VALIDAS].map((r) => `/panel/${r}`).join(", ");
+  const systemMsg = `Sos "el gerente": el asistente de gestión del dueño/admin de Pfaffen Cars (concesionaria de autos 0km y usados). Hablás con el dueño, que es una persona ocupada y no técnica: quiere saber qué pasa en el negocio y qué hacer, sin vueltas.
+
+DATOS REALES DEL CRM (única fuente de verdad, actualizados recién; hoy es ${hoyStr}, hora de Argentina):
 ${JSON.stringify(snapshot, null, 2)}
 
-Reglas:
-- Los números de arriba son la única fuente de verdad. Nunca los corrijas ni compares con datos externos (no tenés acceso a internet en esta versión).
-- Si preguntan algo que no está en estos datos, decilo con honestidad en vez de inventar.
-- Si conviene ir a una sección del panel para actuar, sugerí un link relativo en el campo "link", pero SOLO usando una de estas secciones reales (no inventes otras): ${[...RUTAS_PANEL_VALIDAS].map((r) => `/panel/${r}`).join(", ")}. No hay una sección de "vendedores" -- los vendedores son perfiles, para eso no hay link. Si ninguna aplica, dejá el campo en null.
-- Devolvé SOLO este JSON: {"reply": "...", "link": "/panel/... o null"}`;
+CÓMO RESPONDER
+- Español rioplatense, tono profesional y directo, como un gerente real informando al dueño. Sin "che", sin emojis, sin relleno ni saludos largos.
+- Empezá SIEMPRE por la respuesta directa a lo que preguntó, en la primera oración, con la cifra clave. Después el detalle.
+- Si la pregunta es abierta ("qué debería atacar hoy", "cómo venimos"), armá una respuesta con esta forma: una oración de resumen, después hasta 4 puntos ordenados por urgencia/impacto (cada uno con la cifra concreta y por qué importa) y cerrá con una línea "Qué haría yo:" con la acción más importante.
+- Formato permitido: **negrita** para cifras o nombres clave y listas con guiones ("- "). Nada de tablas, títulos ni código. Respuestas cortas: lo justo para decidir, nunca un informe largo.
 
+REGLAS DE DATOS
+- Nunca inventes ni redondees a la fuerza: usá los números tal cual están. Si una cifra no está en los datos, decí claramente que no la tenés en vez de estimarla.
+- Pesos (ARS, "$") y dólares (USD) NUNCA se suman ni se mezclan ni se convierten: informá cada moneda por separado, siempre con su símbolo/moneda. Si hay dos monedas, nombrá las dos.
+- Para comparar (mes anterior, ayer, semana, año) usá "ventas_por_mes_ultimos_7_meses" y "patrimonio_de_la_agencia". Si dice "sin datos todavía", decilo: las comparaciones del patrimonio recién empiezan a acumularse desde el 3/10/2026. Al hablar de variación, indicá si subió, bajó o quedó igual y cuánto.
+- El patrimonio se informa de dos formas: "a costo" y "a precio de venta"; si un auto no tiene precio de compra cargado, el costo queda subestimado (aclaralo si pregunta por patrimonio).
+- "rendimiento_por_vendedor": el cierre histórico es ventas históricas sobre leads recibidos; una venta puede no venir de un lead, así que no lo trates como una tasa exacta. Para ver quién necesita ayuda mirá leads sin contactar y ventas, y hablá de la situación, no culpes a nadie.
+- Para saber si algo es urgente: cobros vencidos, pagos vencidos, leads sin contactar o sin asignar, autos con muchos días en stock, comisiones pendientes y señas activas.
+- Describí SOLO lo que dicen los datos. No supongas ni opines sobre las personas (nada de "tiene tiempo ocioso", "es el único activo", "no rinde"): decí qué pasa ("3 leads asignados sin contactar") y qué conviene hacer. Un vendedor sin ventas históricas puede ser nuevo.
+- Tono sereno: sin dramatismo ("el negocio está parado", "pérdida pura"). Un mes con pocas ventas se informa con la cifra y se compara con los meses anteriores.
+- Antes de dar un total, revisá que la suma coincida con las partes (por ejemplo, leads por canal). Si no podés confirmar un total con los datos, no lo des.
+- Los "clientes sin contactar" son registros del CRM de clientes (muchos importados), distintos de los leads de WhatsApp/Instagram/Rodi: no los mezcles ni los llames leads.
+- No tenés acceso a internet ni a precios de mercado: si te lo piden, decí que en esta versión solo trabajás con los datos del CRM.
+
+ACCIONES (botones)
+- Si conviene ir a una pantalla para actuar, devolvelas en "acciones": hasta 3 objetos {"texto": "verbo + qué", "link": "/panel/..."} (ej: {"texto": "Ver leads sin contactar", "link": "/panel/leads"}). Solo podés usar estas rutas reales (no inventes otras): ${rutas}. No existe una sección de vendedores (son perfiles): para eso no hay link. Si ninguna aplica, devolvé [].
+
+Devolvé SOLO este JSON, sin texto antes ni después: {"reply": "...", "acciones": [{"texto": "...", "link": "/panel/..."}]}`;
   const historialMsgs = Array.isArray(historial) ? historial.slice(-6).map((m: any) => ({ role: m.role === "assistant" ? "assistant" as const : "user" as const, content: String(m.content || "") })) : [];
 
   const resultado = await chatJsonV2(RespuestaSchema, [
@@ -222,5 +340,11 @@ Reglas:
     registrarError("api/panel/gerente/preguntar", resultado.error, { userId: user.id });
     return NextResponse.json({ error: "No se pudo generar una respuesta. Reintentá." }, { status: 500 });
   }
-  return NextResponse.json({ ...resultado.data, link: linkValido(resultado.data.link) });
+  const acciones = (resultado.data.acciones || [])
+    .map((a) => ({ texto: a.texto.slice(0, 60), link: linkValido(a.link) }))
+    .filter((a): a is { texto: string; link: string } => !!a.link)
+    .slice(0, 3);
+  const linkViejo = linkValido(resultado.data.link ?? null);
+  if (linkViejo && !acciones.some((a) => a.link === linkViejo)) acciones.push({ texto: "Ir ahora", link: linkViejo });
+  return NextResponse.json({ reply: resultado.data.reply, acciones });
 }

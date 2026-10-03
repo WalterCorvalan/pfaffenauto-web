@@ -212,7 +212,27 @@ export default function NpsClient({
             <MessageSquare className="w-4 h-4" /> Últimas Respuestas
           </h3>
         </div>
-        <div className="overflow-x-auto">
+        {/* Celular: una tarjeta por respuesta (la tabla de 5 columnas obligaba a deslizar de costado) */}
+        <div className="md:hidden divide-y divide-slate-100 dark:divide-white/5">
+          {respuestasFiltradas.length === 0 ? (
+            <p className="p-6 text-center text-slate-400 text-sm">Sin respuestas en este período.</p>
+          ) : (
+            respuestasFiltradas.slice(0, 50).map((r) => (
+              <div key={r.id} className="p-4 flex items-start gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-[13px] font-bold text-slate-800 dark:text-white">{r.clientes?.nombre || "Anónimo"}</p>
+                    <span className="text-[10px] font-bold bg-slate-100 dark:bg-white/10 px-2 py-0.5 rounded-md text-slate-600 dark:text-slate-300">{CONTEXTOS[r.contexto] || r.contexto}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-0.5">{new Date(r.created_at).toLocaleDateString("es-AR")}{esAdminORecepcion && r.perfiles?.nombre ? ` · Vend: ${r.perfiles.nombre}` : ""}</p>
+                  <p className="text-[12px] text-slate-600 dark:text-slate-300 mt-1">{r.comentario ? `"${r.comentario}"` : <span className="text-slate-400 italic">Sin comentario</span>}</p>
+                </div>
+                <span className={`inline-flex items-center justify-center w-8 h-8 shrink-0 rounded-full font-black text-[13px] text-white shadow-sm ${r.puntaje >= 9 ? "bg-emerald-500" : r.puntaje >= 7 ? "bg-amber-500" : "bg-rose-500"}`}>{r.puntaje}</span>
+              </div>
+            ))
+          )}
+        </div>
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10 text-slate-500 text-[10px] uppercase tracking-widest font-bold">

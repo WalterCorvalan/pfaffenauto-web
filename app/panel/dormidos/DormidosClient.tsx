@@ -73,12 +73,19 @@ export default function DormidosClient({
 
   const conTelefono = filtrados.filter((d) => d.telefono);
   const vip = filtrados.filter((d) => d.cantidadCompras >= 2);
-  const precioPromedioUsd = useMemo(() => {
-    const usd = ventas.filter((v) => v.moneda_venta === "USD");
-    if (!usd.length) return 6000;
-    return Math.round(usd.reduce((acc, v) => acc + Number(v.precio_venta || 0), 0) / usd.length);
-  }, [ventas]);
-  const potencialRenovacion = Math.round(conTelefono.length * 0.15 * precioPromedioUsd);
+  // Precio promedio de venta por moneda (pesos y dólares nunca se mezclan). Solo se muestran las monedas con ventas reales;
+  // antes, sin ventas en dólares, se inventaba un precio de USD 6.000.
+  const potencialPorMoneda = useMemo(() => {
+    const out: { moneda: "ARS" | "USD"; promedio: number; potencial: number }[] = [];
+    (["ARS", "USD"] as const).forEach((moneda) => {
+      const delaMoneda = ventas.filter((v) => v.moneda_venta === moneda);
+      if (!delaMoneda.length) return;
+      const promedio = Math.round(delaMoneda.reduce((acc, v) => acc + Number(v.precio_venta || 0), 0) / delaMoneda.length);
+      out.push({ moneda, promedio, potencial: Math.round(conTelefono.length * 0.15 * promedio) });
+    });
+    return out;
+  }, [ventas, conTelefono.length]);
+  const fmtMonto = (n: number, moneda: string) => `${moneda === "USD" ? "USD" : "$"} ${n.toLocaleString("es-AR")}`;
 
   const armarMensaje = (d: typeof filtrados[number]) => {
     const vehiculo = [d.marca, d.modelo].filter(Boolean).join(" ") || "tu auto";
@@ -131,8 +138,14 @@ export default function DormidosClient({
             </div>
             <div className="bg-emerald-50/50 dark:bg-emerald-500/[0.04] border border-emerald-100 dark:border-emerald-500/10 rounded-2xl p-4">
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Potencial renovación</p>
-              <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">USD {potencialRenovacion.toLocaleString("es-AR")}</p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">15% renueva × USD {precioPromedioUsd.toLocaleString("es-AR")}</p>
+              {potencialPorMoneda.length === 0 ? (
+                <p className="text-sm text-slate-400 mt-1">Sin ventas cargadas todavía.</p>
+              ) : potencialPorMoneda.map((p) => (
+                <div key={p.moneda} className="mt-1">
+                  <p className="text-2xl font-black text-slate-900 dark:text-white">{fmtMonto(p.potencial, p.moneda)}</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">15% renueva × {fmtMonto(p.promedio, p.moneda)}</p>
+                </div>
+              ))}
             </div>
           </div>
 

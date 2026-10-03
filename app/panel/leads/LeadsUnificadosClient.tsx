@@ -275,12 +275,14 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
     : "bg-white dark:bg-transparent border-l-2 border-l-transparent hover:bg-slate-50 dark:hover:bg-white/5";
 
   const abrirDesdeVista = (id: string, origen: Origen) => { setSeleccionado({ id, origen }); setModo("lista"); };
+  // El Ranking es solo para admin y encargado (los vendedores no ven el rendimiento de los demás).
+  const puedeVerRanking = misRoles.includes("admin") || misRoles.includes("encargado");
   const MODOS = [
     { v: "lista" as const, label: "Lista", icon: List },
     { v: "pipeline" as const, label: "Pipeline", icon: Columns3 },
     { v: "ingresos" as const, label: "Ingresos", icon: TrendingUp },
     { v: "ranking" as const, label: "Ranking", icon: Trophy },
-  ];
+  ].filter((m) => m.v !== "ranking" || puedeVerRanking);
 
   return (
     <div className="flex flex-col w-full h-full text-slate-800 dark:text-slate-200 overflow-hidden">
@@ -297,7 +299,7 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
 
       {modo === "pipeline" && <PipelineLeads leads={clasificados} vendedores={vendedores} miId={miId} onAbrir={abrirDesdeVista} onMovido={actualizarUno} />}
       {modo === "ingresos" && <IngresosLeads leads={clasificados} vendedores={vendedores} />}
-      {modo === "ranking" && <RankingLeads leads={clasificados} vendedores={vendedores} ventasCerradas={ventasCerradas} />}
+      {modo === "ranking" && puedeVerRanking && <RankingLeads leads={clasificados} vendedores={vendedores} ventasCerradas={ventasCerradas} />}
 
       {modo === "lista" && (
     <div className="flex flex-1 min-h-0 w-full overflow-hidden">

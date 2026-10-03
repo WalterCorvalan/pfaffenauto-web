@@ -32,7 +32,7 @@ interface Props {
   cierreMesAnterior: { autos: number; mejorVendedor: string | null; multasArs: number };
   calificaciones: { promedio: number | null; distribucion: number[]; pedidasSinResponder: number; total: number };
   gestoriaPorMoneda: Record<string, number>;
-  gananciaPorMes: { mes: string; monto: number }[];
+  gananciaPorMes: { mes: string; monto: number; montoArs: number }[];
   ventasPorMes12: { mes: string; cantidad: number }[];
   proyeccionCaja: {
     saldos: { moneda: string; total: number }[];
@@ -47,8 +47,8 @@ interface Props {
     premioSiguiente: { faltan: number; meta: number; premioUsd: number | null } | null;
   };
   cuotasPagarResumen: { totalPorMoneda: Record<string, number>; cantidadDelMes: number; vencidas: number };
-  resumenAnual: { anio: number; autos: number; usd: number }[];
-  tuOperacion: { ventas: number; usd: number; consignacionesAno: number };
+  resumenAnual: { anio: number; autos: number; usd: number; ars: number }[];
+  tuOperacion: { ventas: number; usd: number; ars: number; consignacionesAno: number };
   clientesIngresadosHoy: number; clientesUltimos7dias: number; canalTop: string | null;
   eventosProximos: { id: string; titulo: string; fecha: string }[];
   vencidos: number; venceHoy: number; venceProx7d: number;
