@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import ChatClient from "./ChatClient";
 import LeadsTab from "./LeadsTab";
+import { Crossfade } from "@/components/ui/movimiento";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 
@@ -44,6 +45,7 @@ export default function ConversacionesShell({
       </div>
 
       <div className="flex-1 min-h-0">
+        <Crossfade id={tab} className="h-full" classNameInterno="h-full">
         {tab === "bandeja" && (
           <ChatClient conversacionesIniciales={conversacionesIniciales} conversacionesInstagramIniciales={conversacionesInstagramIniciales} conversacionesMessengerIniciales={conversacionesMessengerIniciales} vendedores={vendedores} canalFijo={canalFijo} />
         )}
@@ -63,6 +65,7 @@ export default function ConversacionesShell({
             </div>
           </div>
         )}
+        </Crossfade>
       </div>
     </div>
   );

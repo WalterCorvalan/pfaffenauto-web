@@ -10,6 +10,7 @@ import { MARCAS_ARGENTINA, MODELOS_POR_MARCA } from "@/lib/marcasModelos";
 import { supabase2 } from "@/lib/supabase/client";
 import { normalizarMarca } from "@/lib/vehiculos";
 import { LOGOS_MARCAS } from "@/lib/marcasLogos";
+import { Crossfade } from "@/components/ui/movimiento";
 
 const marcasDisponibles = MARCAS_ARGENTINA;
 const modelosPorMarca = MODELOS_POR_MARCA;
@@ -377,6 +378,7 @@ export default function VenderForm() {
           <div className="relative">
             <AnimatePresence mode="wait">
 
+              <Crossfade id={step}>
               {step === 1 && (
                 <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="grid grid-cols-2 gap-2 lg:block lg:space-y-3">
                   <ConfigField icon={CalendarDays} label="Año" value={anio} isOpen={openDropdown === "anio"} onClick={() => setOpenDropdown(openDropdown === "anio" ? null : "anio")} isCompleted={!!anio}>
@@ -577,6 +579,7 @@ export default function VenderForm() {
                   </form>
                 </motion.div>
               )}
+              </Crossfade>
 
             </AnimatePresence>
           </div>

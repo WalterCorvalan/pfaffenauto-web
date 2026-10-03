@@ -5,6 +5,7 @@ import { Target, LayoutDashboard, EyeOff, Eye, FileText, Receipt, Calculator, Ch
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { PanelSkeletonDashboard } from "@/components/panel/PanelSkeleton";
+import { Crossfade } from "@/components/ui/movimiento";
 
 // Dynamic import (sin SSR) -- CockpitCeoTab y DashboardGeneralTab usan
 // recharts (pesado) y nunca se muestran los dos a la vez (son un tab), así
@@ -119,6 +120,7 @@ export default function DashboardClient(props: Props) {
         </button>
       </div>
 
+      <Crossfade id={tab === "cockpit" && props.esAdmin ? "cockpit" : "general"}>
       {tab === "cockpit" && props.esAdmin ? (
         <CockpitCeoTab
           miNombre={props.miNombre}
@@ -193,6 +195,7 @@ export default function DashboardClient(props: Props) {
           gastosAtipicos={props.gastosAtipicos}
         />
       )}
+      </Crossfade>
     </div>
   );
 }

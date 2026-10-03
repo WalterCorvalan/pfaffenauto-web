@@ -7,6 +7,7 @@ import { ChevronDown, ChevronRight, MessageCircle, Check, ClipboardList, AlertTr
 import ExpedienteDetalleModal from "../expedientes/ExpedienteDetalleModal";
 import { fmtFechaLocal, hoyLocalISO } from "@/lib/panel/fechas";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
+import { Crossfade } from "@/components/ui/movimiento";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 
@@ -145,6 +146,7 @@ export default function GestoriaClient({
         <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar por comprador, vehículo, patente o gestor..." className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2 pl-9 pr-3 text-xs outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400" />
       </div>
 
+      <Crossfade id={`${tab}-${vista}`}>
       {lista.length === 0 ? (
         <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 flex flex-col items-center justify-center text-center">
           <ClipboardList className="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2" />
@@ -298,6 +300,7 @@ export default function GestoriaClient({
           })}
         </div>
       )}
+      </Crossfade>
 
       {detalleId && (
         <ExpedienteDetalleModal

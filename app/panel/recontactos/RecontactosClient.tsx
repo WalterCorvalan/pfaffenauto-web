@@ -8,6 +8,7 @@ import {
   Car, Handshake, Wrench, MessagesSquare, Send,
 } from "lucide-react";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
+import { Crossfade } from "@/components/ui/movimiento";
 
 interface Cliente {
   id: string; nombre: string; telefono: string | null; vehiculo_interes_texto: string | null;
@@ -292,6 +293,7 @@ export default function RecontactosClient({
             <button onClick={() => setTab("recontactados")} className={`px-3 py-2 text-sm font-bold border-b-2 -mb-px transition-colors ${tab === "recontactados" ? "border-[#0145F2] text-[#0145F2]" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`}>Ya recontactados ({recontactos.length})</button>
           </div>
 
+          <Crossfade id={tab}>
           {tab === "para" ? (
             <>
               <div className="flex flex-wrap items-end gap-3 mb-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-4">
@@ -434,6 +436,7 @@ export default function RecontactosClient({
               )}
             </>
           )}
+          </Crossfade>
         </div>
       </div>
 

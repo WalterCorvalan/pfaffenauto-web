@@ -9,6 +9,7 @@ import {
   Edit2, Check, Flame, Snowflake, Minus, Receipt, Wallet, ClipboardCheck, Loader2, MessageCircle, Building2,
   Trash2, RotateCcw, Sparkles, UserRound,
 } from "lucide-react";
+import { Compartido } from "@/components/ui/movimiento";
 
 const ESTADOS_LEAD = [
   { value: "nuevo", label: "Nuevo" },
@@ -497,7 +498,7 @@ export default function LeadDetailModal({
                   {nombre.substring(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-slate-900 dark:text-white">{nombre}</h1>
+                  <Compartido destino como="h1" id={`nombre-lead-${leadId}`} className="text-xl font-bold text-slate-900 dark:text-white">{nombre}</Compartido>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{origen === "manual" ? "Lead cargado a mano" : `Consulta por ${ETIQUETA_ORIGEN[origen]}`}</p>
                 </div>
               </div>

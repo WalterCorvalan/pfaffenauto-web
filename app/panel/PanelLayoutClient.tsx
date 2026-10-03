@@ -21,7 +21,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, ViewTransition } from "react";
+import { motion } from "framer-motion";
+import { CURVA } from "@/components/ui/movimiento";
 
 // Grupos calcados del índice del manual del CRM viejo — todo lo que todavía
 // no construimos queda listado pero deshabilitado, para que el mapa completo
@@ -791,21 +793,24 @@ export default function PanelLayoutClient({
                               setIsOpen(false);
                               if (!activo) setNavegandoA(item.href!);
                             }}
-                            className={`flex items-center gap-3 py-2 mx-2 rounded-lg text-sm transition-all active:scale-[0.97] ${colapsado ? "md:justify-center px-4 md:px-0" : "px-4"} ${
+                            className={`relative flex items-center gap-3 py-2 mx-2 rounded-lg text-sm transition-all active:scale-[0.97] ${colapsado ? "md:justify-center px-4 md:px-0" : "px-4"} ${
                               activo
-                                ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-semibold"
+                                ? "text-indigo-700 dark:text-indigo-300 font-semibold"
                                 : cargando
                                   ? "bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-300"
                                   : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
                             }`}
                           >
-                            {cargando ? (
-                              <RotateCw className="w-4 h-4 animate-spin shrink-0" />
-                            ) : (
-                              <img src={item.icon} alt="" className="w-4 h-4 shrink-0 object-contain" />
-                            )}{" "}
-                            <span className={colapsado ? "md:hidden" : ""}>
-                              {item.label}
+                            {activo && <motion.span layoutId="menu-activo" transition={{ duration: 0.28, ease: CURVA }} className="absolute inset-0 rounded-lg bg-indigo-50 dark:bg-indigo-500/10" />}
+                            <span className="relative flex items-center gap-3">
+                              {cargando ? (
+                                <RotateCw className="w-4 h-4 animate-spin shrink-0" />
+                              ) : (
+                                <img src={item.icon} alt="" className="w-4 h-4 shrink-0 object-contain" />
+                              )}{" "}
+                              <span className={colapsado ? "md:hidden" : ""}>
+                                {item.label}
+                              </span>
                             </span>
                           </Link>
                         );
@@ -883,7 +888,10 @@ export default function PanelLayoutClient({
                 <div className="h-full w-1/3 bg-indigo-600 dark:bg-indigo-400 animate-barra-carga" />
               </div>
             )}
-            {children}
+            {/* Cambio de módulo: el contenido viejo se desvanece mientras entra el nuevo (View Transitions, ver globals.css). El menú y la barra de arriba no se mueven. */}
+            <ViewTransition key={pathname} name="panel-contenido" share="auto" enter="auto" exit="auto" default="none">
+              {children}
+            </ViewTransition>
           </main>
         </div>
 

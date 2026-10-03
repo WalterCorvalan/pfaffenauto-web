@@ -9,6 +9,7 @@ import { MARCAS_ARGENTINA, MODELOS_POR_MARCA } from "@/lib/marcasModelos";
 import { supabase2 } from "@/lib/supabase/client";
 import { normalizarMarca } from "@/lib/vehiculos";
 import { LOGOS_MARCAS } from "@/lib/marcasLogos";
+import { Crossfade } from "@/components/ui/movimiento";
 
 const marcasDisponibles = MARCAS_ARGENTINA;
 const modelosPorMarca = MODELOS_POR_MARCA;
@@ -413,6 +414,7 @@ export default function ConsignarForm() {
             <AnimatePresence mode="wait">
               
               {/* --- PASO 1: VEHÍCULO --- */}
+              <Crossfade id={step}>
               {step === 1 && (
                 <motion.div 
                   key="step1"
@@ -610,6 +612,7 @@ export default function ConsignarForm() {
                   </form>
                 </motion.div>
               )}
+              </Crossfade>
 
             </AnimatePresence>
           </div>

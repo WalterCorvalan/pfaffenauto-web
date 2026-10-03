@@ -8,6 +8,7 @@ import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResp
 import FinanciacionDetalleModal from "./FinanciacionDetalleModal";
 import SimuladorPropioModal from "./SimuladorPropioModal";
 import FinanciacionConfigTab from "./FinanciacionConfigTab";
+import { Crossfade } from "@/components/ui/movimiento";
 
 const ESTADO_LABEL: Record<string, string> = { nuevo: "Nuevo", en_gestion: "En gestión", descartado: "Descartado" };
 const ESTADO_STYLES: Record<string, string> = {
@@ -114,6 +115,7 @@ export default function FinanciacionesClient({ solicitudesIniciales, staff, esAd
         </div>
       </div>
 
+      <Crossfade id={vista}>
       {vista === "config" ? (
         <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#141414]">
           <FinanciacionConfigTab />
@@ -204,6 +206,7 @@ export default function FinanciacionesClient({ solicitudesIniciales, staff, esAd
       </div>
       </>
       )}
+      </Crossfade>
 
       {seleccionada && <FinanciacionDetalleModal solicitud={seleccionada} vendedorNombre={seleccionada.vendedor_id ? perfilMap[seleccionada.vendedor_id] : null} onClose={() => setSeleccionada(null)} />}
       {simuladorAbierto && <SimuladorPropioModal onClose={() => setSimuladorAbierto(false)} />}

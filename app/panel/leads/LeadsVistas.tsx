@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import { MessageCircle, AtSign, Bot, User, Flame } from "lucide-react";
 import { supabase2 } from "@/lib/supabase/client";
+import { motion } from "framer-motion";
+import { Cascada, CURVA } from "@/components/ui/movimiento";
 
 // Vistas extra del módulo Leads (pedido 3/10/2026, mismas ideas que los tabs de Clientes):
 // Pipeline (tablero por estado), Ingresos (cuántos leads entran, por día y por canal) y Ranking (por vendedor).
@@ -74,12 +76,15 @@ export function PipelineLeads({ leads, vendedores, miId, onAbrir, onMovido }: {
     <div className="flex-1 min-h-0 overflow-auto p-3 sm:p-4">
       <p className="text-[11px] text-slate-400 mb-3">Arrastrá un lead a otra columna para cambiar su estado (en el celular, usá el selector de la tarjeta). Los leads basura no aparecen acá.</p>
       <div className="flex gap-3 min-w-max md:min-w-0 md:grid md:grid-cols-5 items-start">
-        {COLUMNAS.map((col) => {
+        {COLUMNAS.map((col, indiceCol) => {
           const lista = porColumna[col.estado];
           const limite = verTodos[col.estado] ? lista.length : 40;
           return (
-            <div
+            <motion.div
               key={col.estado}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, ease: CURVA, delay: indiceCol * 0.06 }}
               onDragOver={(e) => { e.preventDefault(); setColumnaSobre(col.estado); }}
               onDragLeave={() => setColumnaSobre((c) => (c === col.estado ? null : c))}
               onDrop={() => {
@@ -133,7 +138,7 @@ export function PipelineLeads({ leads, vendedores, miId, onAbrir, onMovido }: {
                   <button onClick={() => setVerTodos((p) => ({ ...p, [col.estado]: true }))} className="w-full text-[11px] font-bold text-sky-600 dark:text-sky-300 py-1.5">Ver los {lista.length - limite} restantes</button>
                 )}
               </div>
-            </div>
+            </motion.div>
           );
         })}
       </div>
@@ -189,7 +194,7 @@ export function IngresosLeads({ leads, vendedores }: { leads: LeadVista[]; vende
   );
 
   return (
-    <div className="flex-1 min-h-0 overflow-auto p-3 sm:p-4 space-y-4 max-w-5xl">
+    <Cascada className="flex-1 min-h-0 overflow-auto p-3 sm:p-4 space-y-4 max-w-5xl">
       <div className="flex items-center gap-1.5 flex-wrap">
         {PERIODOS.map((p) => (
           <button key={p.key} onClick={() => setPeriodo(p.key)} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${periodo === p.key ? "bg-slate-800 dark:bg-white text-white dark:text-slate-900 border-transparent" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>{p.label}</button>
@@ -230,7 +235,7 @@ export function IngresosLeads({ leads, vendedores }: { leads: LeadVista[]; vende
           {porVendedor.length === 0 ? <p className="text-xs text-slate-400">Sin leads en este período.</p> : porVendedor.slice(0, 8).map(([k, n]) => <Barra key={k} etiqueta={k === "sin" ? "Sin asignar" : vendedores.find((v) => v.id === k)?.nombre || "—"} n={n} max={porVendedor[0][1]} />)}
         </div>
       </div>
-    </div>
+    </Cascada>
   );
 }
 
@@ -268,7 +273,7 @@ export function RankingLeads({ leads, vendedores, ventasCerradas }: { leads: Lea
   }, [leads, vendedores, ventasPorVendedor]);
 
   return (
-    <div className="flex-1 min-h-0 overflow-auto p-3 sm:p-4 max-w-5xl space-y-3">
+    <Cascada className="flex-1 min-h-0 overflow-auto p-3 sm:p-4 max-w-5xl space-y-3">
       <p className="text-[11px] text-slate-400">Por vendedor, sobre todos los leads cargados (sin los marcados como basura). &quot;Ventas&quot; son las ventas cerradas del vendedor{primerLead ? ` desde el ${fechaCorta(primerLead)}, el día del primer lead cargado` : ""}, de todo el historial y no solo de este mes. &quot;Cierre&quot; es esas ventas sobre los leads recibidos: incluye ventas de clientes que no vinieron por un lead, así que puede superar el 100%. &quot;Sin resp.&quot; son leads calientes que escribieron hace 2 días o más y nadie contestó.</p>
       <div className="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden">
         <table className="w-full text-left text-xs">
@@ -299,6 +304,6 @@ export function RankingLeads({ leads, vendedores, ventasCerradas }: { leads: Lea
           </tbody>
         </table>
       </div>
-    </div>
+    </Cascada>
   );
 }

@@ -10,6 +10,7 @@ import {
   PLAZOS_DISPONIBLES,
   topePctPorAnio, tnaPctPorAnioYPlazo, calcularCuotaFrances, type TopeFinanciacion, type TnaGrupo,
 } from "@/lib/financiacion";
+import { Crossfade } from "@/components/ui/movimiento";
 
 interface VehiculoFinanciable {
   id: string;
@@ -228,6 +229,7 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
           ) : (
             <>
               {/* PASO 1: elegir auto del stock */}
+              <Crossfade id={step}>
               {step === 1 && (
                 <div className="space-y-4 animate-fadeIn">
                   <div className="relative">
@@ -408,6 +410,7 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
                   </button>
                 </form>
               )}
+              </Crossfade>
             </>
           )}
         </div>

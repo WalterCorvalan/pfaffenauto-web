@@ -5,6 +5,7 @@ import { supabase2 } from "@/lib/supabase/client";
 import { Landmark, Plus, BarChart3, List, Search } from "lucide-react";
 import NuevaInfraccionModal from "./NuevaInfraccionModal";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
+import { Crossfade } from "@/components/ui/movimiento";
 
 interface Infraccion {
   id: string;
@@ -112,6 +113,7 @@ export default function InfraccionesClient({ infraccionesIniciales, vehiculos, p
       </div>
 
       <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#141414] p-6">
+        <Crossfade id={tab}>
         {tab === "listado" ? (
           <>
             <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -211,6 +213,7 @@ export default function InfraccionesClient({ infraccionesIniciales, vehiculos, p
             )}
           </div>
         )}
+        </Crossfade>
       </div>
 
       {modalAbierto && (

@@ -9,6 +9,7 @@ import ResumenAgenciaTab from "./ResumenAgenciaTab";
 import TransferenciaModal from "./TransferenciaModal";
 import { fmt } from "./shared";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
+import { Crossfade } from "@/components/ui/movimiento";
 
 export default function LiquidacionesClient({
   miId, miNombre, puedeVerLiquidacion, soyAdmin, soyAdminOFinanzas, gananciasOcultas, liquidacionesIniciales, vendedores, cuentas, config,
@@ -129,9 +130,11 @@ export default function LiquidacionesClient({
         <button onClick={() => setTab("resumen")} className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-bold border-b-2 -mb-px ${tab === "resumen" ? "border-[#0145F2] text-[#0145F2]" : "border-transparent text-slate-500"}`}><Building2 className="w-4 h-4" /> Resumen agencia</button>
       </div>
 
+      <Crossfade id={tab}>
       {tab === "transferencias" && <TransferenciasTab liquidaciones={liquidaciones} setLiquidaciones={setLiquidaciones} gananciasOcultas={gananciasOcultas} onEditar={abrirEditar} />}
       {tab === "mensual" && <LiquidacionMensualTab liquidaciones={liquidaciones} setLiquidaciones={setLiquidaciones} gananciasOcultas={gananciasOcultas} soyAdminOFinanzas={soyAdminOFinanzas} cuentas={cuentas} />}
       {tab === "resumen" && <ResumenAgenciaTab liquidaciones={liquidaciones} gananciasOcultas={gananciasOcultas} />}
+      </Crossfade>
 
       {showModal && (
         <TransferenciaModal

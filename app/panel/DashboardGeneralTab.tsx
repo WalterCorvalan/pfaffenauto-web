@@ -10,6 +10,7 @@ import {
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import { zonaEquilibrio, CLASE_ZONA_CARD, type ZonaSemaforo } from "./finanzas/tabs/shared";
+import { Cascada } from "@/components/ui/movimiento";
 
 interface Props {
   esAdmin: boolean; puedeVerFinanzas: boolean; ocultarMontos: boolean;
@@ -130,7 +131,7 @@ export default function DashboardGeneralTab(props: Props) {
   monedasNeto.forEach((m) => { zonaNetoPorMoneda[m] = zonaEquilibrio(props.ingresosPorMoneda[m] || 0, props.egresosPorMoneda[m] || 0); });
 
   return (
-    <div className="space-y-4">
+    <Cascada className="space-y-4">
       <SeccionTitulo>Lo urgente hoy</SeccionTitulo>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Tile label="Leads sin atender" valor={props.leadsSinAtender} icon={Flame} color="rose" alerta={props.leadsSinAtender > 0} href="/panel/leads" />
@@ -619,6 +620,6 @@ export default function DashboardGeneralTab(props: Props) {
       </div>
 
       <p className="text-xs text-slate-400 text-center pt-2">Estás en la app nueva. Las secciones completas van migrando de a una.</p>
-    </div>
+    </Cascada>
   );
 }

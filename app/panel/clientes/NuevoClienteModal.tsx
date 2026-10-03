@@ -6,6 +6,7 @@ import { X, Loader2, DoorOpen, Globe, ScanLine, Search, Car, XCircle } from "luc
 import EscanearDniModal, { type DatosDni } from "./EscanearDniModal";
 import { parseFechaLocal } from "@/lib/panel/fechas";
 import { crearAlerta } from "@/lib/panel/alertas";
+import { Compartido } from "@/components/ui/movimiento";
 
 // Se agregan los canales reales que faltaban (MercadoLibre, Rodi,
 // Messenger) -- mismo vocabulario que ya usa CANALES_ORIGEN en
@@ -241,6 +242,7 @@ export default function NuevoClienteModal({ perfiles, disponibilidad, miId, edit
         <div className="flex justify-between items-start mb-1">
           <div>
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">{esEdicion ? "Editar cliente" : "Nuevo cliente"}</h3>
+            {esEdicion && editando?.nombre && <Compartido destino como="p" id={`nombre-cliente-${editando.id}`} className="text-sm font-bold text-slate-900 dark:text-white">{editando.nombre}</Compartido>}
             <p className="text-xs text-slate-500 dark:text-slate-400">Campos mínimos: nombre. El resto se puede completar más tarde.</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10">

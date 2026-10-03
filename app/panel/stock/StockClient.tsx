@@ -26,6 +26,7 @@ import VendedorEditor from "./VendedorEditor";
 import { parseFechaLocal } from "@/lib/panel/fechas";
 import { tienePermiso } from "@/lib/permisos";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
+import { Compartido, Crossfade } from "@/components/ui/movimiento";
 
 interface Vehiculo {
   id: string; categoria: string; marca: string; modelo: string; anio: number; patente: string | null; color: string | null;
@@ -265,7 +266,7 @@ export default function StockClient({
       </div>
       <div>
         <div className="flex items-center gap-2">
-          <p className="text-sm font-bold text-slate-900 dark:text-white whitespace-nowrap">{v.marca} {v.modelo}</p>
+          <p className="text-sm font-bold text-slate-900 dark:text-white whitespace-nowrap"><Compartido como="span" id={`nombre-vehiculo-${v.id}`}>{v.marca} {v.modelo}</Compartido></p>
           {aRevisar(v) && v.estado === "disponible" && (
             <span title="Sin publicar en MercadoLibre, sin foto o sin precio cargado">
               <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
@@ -443,6 +444,7 @@ export default function StockClient({
                       <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500" /> +60 días</span>
                     </span>
                   </div>
+                  <Crossfade id={vista}>
                   {vista === "lista" && (
                     <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm divide-y divide-slate-100 dark:divide-white/5 overflow-hidden mb-3">
                       {paginados.map((v) => {
@@ -459,7 +461,7 @@ export default function StockClient({
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between gap-2">
-                                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{v.marca} {v.modelo}</p>
+                                <p className="text-sm font-bold text-slate-900 dark:text-white truncate"><Compartido como="span" id={`nombre-vehiculo-${v.id}`}>{v.marca} {v.modelo}</Compartido></p>
                                 <p className="text-sm font-bold text-slate-900 dark:text-white shrink-0">{fmtPrecio(v.precio_venta, v.moneda_venta)}</p>
                               </div>
                               <p className="text-[11px] text-slate-400">{v.anio} · {v.km?.toLocaleString("es-AR") ?? "—"} km · {v.patente || "s/patente"}</p>
@@ -496,7 +498,7 @@ export default function StockClient({
                             </div>
                             <div className="p-2.5">
                               <div className="flex items-start justify-between gap-2">
-                                <p className="text-sm font-bold text-slate-900 dark:text-white">{v.marca} {v.modelo}</p>
+                                <p className="text-sm font-bold text-slate-900 dark:text-white"><Compartido como="span" id={`nombre-vehiculo-${v.id}`}>{v.marca} {v.modelo}</Compartido></p>
                                 <p className="text-sm font-bold text-slate-900 dark:text-white shrink-0">{fmtPrecio(v.precio_venta, v.moneda_venta)}</p>
                               </div>
                               <p className="text-[11px] text-slate-400 mt-0.5">{v.anio} · {v.km?.toLocaleString("es-AR") ?? "—"} km · {v.patente || "s/patente"}</p>
@@ -552,6 +554,7 @@ export default function StockClient({
                     )}
                   />
                   )}
+                  </Crossfade>
                   {totalPaginas > 1 && (
                     <div className="grid grid-cols-3 items-center mt-3 px-1">
                       <p className="text-xs text-slate-400">Página {pagina} de {totalPaginas} — {filtrados.length} en total</p>

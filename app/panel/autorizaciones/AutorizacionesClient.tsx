@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { ShieldAlert, CheckCircle2, XCircle, KeyRound, Save, History, Inbox } from "lucide-react";
+import { Crossfade } from "@/components/ui/movimiento";
 
 const RIESGO_COLOR: Record<string, string> = {
   bajo: "bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400",
@@ -96,6 +97,7 @@ export default function AutorizacionesClient({
         )}
       </div>
 
+      <Crossfade id={tab}>
       {tab === "pendientes" && (
         <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm">
           {pendientes.length === 0 ? (
@@ -191,6 +193,7 @@ export default function AutorizacionesClient({
           </div>
         </div>
       )}
+      </Crossfade>
     </div>
   );
 }

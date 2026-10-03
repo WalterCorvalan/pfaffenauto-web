@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { X, Loader2, Maximize2, ScanLine, ClipboardPaste, ImagePlus, Upload, CheckCircle2, AlertTriangle } from "lucide-react";
 import { crearAlerta } from "@/lib/panel/alertas";
+import { Compartido } from "@/components/ui/movimiento";
 
 export const MARCAS = ["Toyota", "Volkswagen", "Ford", "Chevrolet", "Renault", "Peugeot", "Fiat", "Honda", "Hyundai", "Nissan", "Jeep", "Citroën", "BMW", "Mercedes-Benz", "Audi", "Otra"];
 const CATEGORIAS = ["Auto", "Pickup/Camioneta", "SUV", "Utilitario", "Moto", "Camión", "Camioneta", "Casa Rodante", "Ómnibus | Van"];
@@ -384,6 +385,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
         <div className="flex justify-between items-start mb-1">
           <div>
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">{esEdicion ? "Editar vehículo" : "Nuevo vehículo"}</h3>
+            {esEdicion && editando?.marca && <Compartido destino como="p" id={`nombre-vehiculo-${editando.id}`} className="text-sm font-bold text-slate-900 dark:text-white">{editando.marca} {editando.modelo}</Compartido>}
             <p className="text-xs text-slate-500 dark:text-slate-400">Datos básicos del vehículo. Escaneo de cédula verde disponible luego de crear el vehículo.</p>
             {esEdicion && editando?.updated_at && (
               <p className="text-[10px] text-slate-400 mt-1">

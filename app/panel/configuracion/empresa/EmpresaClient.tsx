@@ -9,6 +9,7 @@ import Toggle from "@/components/panel/Toggle";
 import PrimerosPasos from "./PrimerosPasos";
 import SaldoIaConfig from "./SaldoIaConfig";
 import { MODULOS_CATALOGO, SECTORES, SECTOR_LABEL } from "@/lib/panel/modulosCatalogo";
+import { Crossfade } from "@/components/ui/movimiento";
 
 const MODULO_LABEL: Record<string, string> = Object.fromEntries(MODULOS_CATALOGO.map((m) => [m.modulo, m.label]));
 
@@ -96,6 +97,7 @@ export default function EmpresaClient() {
         <button onClick={() => setSubtab("ia")} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${subtab === "ia" ? "bg-[#0145F2] text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500"}`}>IA</button>
       </div>
 
+      <Crossfade id={cargando ? "cargando" : subtab}>
       {cargando ? (
         <div className="p-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
       ) : subtab === "modulos" ? (
@@ -161,6 +163,7 @@ export default function EmpresaClient() {
       ) : (
         <BrandingConfig />
       )}
+      </Crossfade>
     </div>
   );
 }

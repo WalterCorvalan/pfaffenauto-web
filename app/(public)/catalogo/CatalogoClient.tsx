@@ -25,6 +25,7 @@ import BuscadorSugerencias from "@/components/BuscadorSugerencias";
 import { agregarBusquedaReciente } from "@/lib/busquedasRecientes";
 import { CAMPOS_VEHICULO_PUBLICO, normalizarMarca } from "@/lib/vehiculos";
 import { VehicleCard } from "@/components/Stock";
+import { CascadaItem } from "@/components/ui/movimiento";
 
 const ITEMS_POR_PAGINA = 12;
 
@@ -735,14 +736,16 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
                 {/* CAMBIO ACÁ: grid-cols-2 para móvil por defecto */}
                 <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 md:gap-6 pb-8 w-full">
                   {vehiculos.map((auto, index) => (
-                    <VehicleCard
-                      key={`${auto.id}-${index}`}
-                      auto={auto}
-                      estaSeleccionado={autosComparar.some((a) => a.id === auto.id)}
-                      onToggleComparar={toggleComparar}
-                      variante="alt"
-                      compacta
-                    />
+                    // Cascada: las tarjetas entran una detrás de otra; "i" se reinicia cada 8 para que al cargar más no esperen mucho.
+                    <CascadaItem key={`${auto.id}-${index}`} i={index % 8} className="h-full">
+                      <VehicleCard
+                        auto={auto}
+                        estaSeleccionado={autosComparar.some((a) => a.id === auto.id)}
+                        onToggleComparar={toggleComparar}
+                        variante="alt"
+                        compacta
+                      />
+                    </CascadaItem>
                   ))}
                 </div>
 

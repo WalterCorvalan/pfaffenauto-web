@@ -13,6 +13,7 @@ import {
   PieChart, Pie, Cell, Legend,
 } from "recharts";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
+import { Crossfade } from "@/components/ui/movimiento";
 
 const CALIFICACIONES = [
   { value: "caliente", label: "Caliente" },
@@ -170,6 +171,7 @@ export default function TareasLeadBoard({
       </header>
 
       <div className="flex-1 overflow-y-auto bg-[#F9FAFB] dark:bg-[#0A0A0A] p-6 print:overflow-visible print:bg-white print:p-0">
+        <Crossfade id={vista}>
         {vista === "tablero" && (
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 max-w-[1800px] mx-auto">
             <Columna titulo="Tareas vencidas" color="rose" icono={<AlertTriangle className="w-4 h-4 text-white" />} items={vencidas} render={(t) => <TareaCard tarea={t} color="rose" />} />
@@ -243,6 +245,7 @@ export default function TareasLeadBoard({
             </div>
           </div>
         )}
+        </Crossfade>
       </div>
     </div>
   );

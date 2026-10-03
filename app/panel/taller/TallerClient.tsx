@@ -9,6 +9,7 @@ import TallerResumenTab from "./TallerResumenTab";
 import TallerBoard from "./TallerBoard";
 import OrdenTallerDetalleModal from "./OrdenTallerDetalleModal";
 import { ETAPAS_TALLER, ETAPA_ENTREGA } from "./etapasTaller";
+import { Crossfade } from "@/components/ui/movimiento";
 export default function TallerClient({
   ordenesIniciales,
   mecanicos,
@@ -111,6 +112,7 @@ export default function TallerClient({
           />
         </div>
 
+        <Crossfade id={tabActivo}>
         {tabActivo === "Resumen" ? (
           <TallerResumenTab ordenes={ordenesIniciales} cobros={cobrosMes} renglones={renglonesMes} puedeVerPlata={puedeVerPlata} />
         ) : tabActivo === "Tablero" ? (
@@ -150,6 +152,7 @@ export default function TallerClient({
             <p className="text-[13px] font-medium text-slate-500">&quot;{tabActivo}&quot; todavía no está implementado.</p>
           </div>
         )}
+        </Crossfade>
       </div>
 
       {modalNuevaOT && (

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { Sparkles, Send, Loader2, X, RotateCcw, ArrowRight, ChevronRight } from "lucide-react";
+import { CascadaItem } from "@/components/ui/movimiento";
 
 // "Preguntale al gerente" (Cockpit CEO): tarjeta compacta en el Dashboard + chat a pantalla completa en el celular
 // (en computadora, una ventana centrada). Las respuestas vienen de /api/panel/gerente/preguntar.
@@ -111,8 +112,8 @@ export default function GerenteChat() {
         </div>
 
         <div className="flex gap-2 overflow-x-auto sm:flex-wrap -mx-1 px-1 pb-1 mb-3">
-          {PREGUNTAS_RAPIDAS.slice(0, 4).map((p) => (
-            <button key={p} onClick={() => enviar(p)} disabled={cargando} className="shrink-0 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-xs font-semibold disabled:opacity-50 whitespace-nowrap">{p}</button>
+          {PREGUNTAS_RAPIDAS.slice(0, 4).map((p, i) => (
+            <CascadaItem key={p} i={i} className="shrink-0"><button onClick={() => enviar(p)} disabled={cargando} className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-xs font-semibold disabled:opacity-50 whitespace-nowrap">{p}</button></CascadaItem>
           ))}
         </div>
 
@@ -143,8 +144,8 @@ export default function GerenteChat() {
                 <div className="space-y-3">
                   <p className="text-sm text-slate-500 dark:text-slate-400">Preguntame lo que quieras sobre el negocio: ventas, stock, leads, caja, cobros, patrimonio o vendedores.</p>
                   <div className="flex flex-col gap-2">
-                    {PREGUNTAS_RAPIDAS.map((p) => (
-                      <button key={p} onClick={() => enviar(p)} className="text-left px-3.5 py-2.5 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-indigo-300">{p}</button>
+                    {PREGUNTAS_RAPIDAS.map((p, i) => (
+                      <CascadaItem key={p} i={i}><button onClick={() => enviar(p)} className="w-full text-left px-3.5 py-2.5 rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:border-indigo-300">{p}</button></CascadaItem>
                     ))}
                   </div>
                 </div>

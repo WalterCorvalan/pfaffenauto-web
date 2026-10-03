@@ -23,6 +23,7 @@ import NotificacionesTab from "./tabs/NotificacionesTab";
 import MiWhatsAppTab from "./tabs/MiWhatsAppTab";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
+import { Crossfade } from "@/components/ui/movimiento";
 
 const RESUMEN_ITEMS = [
   { key: "ventas_cerradas", label: "Ventas cerradas", desc: "Cerradas en 24h y en la semana" },
@@ -339,6 +340,7 @@ export default function MiEspacioClient({
         {OTRAS_TABS.map(renderTab)}
       </div>
 
+      <Crossfade id={tab}>
       {tab === "mi-dia" && (
         <div className="space-y-4">
           {vencidos.length === 0 && hoyVencen.length === 0 ? (
@@ -618,6 +620,7 @@ export default function MiEspacioClient({
       {tab === "contactos" && <ContactosTab miId={miId} />}
       {tab === "notificaciones" && <NotificacionesTab miId={miId} />}
       {tab === "whatsapp" && <MiWhatsAppTab miId={miId} />}
+      </Crossfade>
 
       {!soyAdmin && ["urgente", "pagos", "deudas", "cuotas-pagar", "cuotas-cobrar", "saldo-agencia", "gastos-fijos"].includes(tab) && (
         <p className="text-sm text-slate-400 text-center py-16">Esta sección es solo para administradores.</p>

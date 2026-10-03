@@ -11,6 +11,7 @@ import {
 import { supabase2 } from "@/lib/supabase/client";
 import { useRentabilidadPorVehiculo } from "./finanzas/tabs/useRentabilidadPorVehiculo";
 import { ingresosEgresosOperatoriaAreaPorMoneda, zonaEquilibrio, CLASE_ZONA_CARD } from "./finanzas/tabs/shared";
+import { Cascada } from "@/components/ui/movimiento";
 
 interface RankingFila { vendedor_id: string; nombre: string; ventas_equivalentes: number; consignaciones: number }
 interface Props {
@@ -83,7 +84,7 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
   const totalEstrellas = calificaciones.distribucion.reduce((a, b) => a + b, 0) || 1;
 
   return (
-    <div className="space-y-5">
+    <Cascada className="space-y-5">
       <GerenteChat />
 
       <div className="rounded-2xl p-5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white flex items-center justify-between">
@@ -275,6 +276,6 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
       {!objetivoVentasMensual && (
         <p className="text-xs text-slate-400 text-center">Cargá el objetivo mensual de ventas en Configuración → Empresa para ver el progreso acá.</p>
       )}
-    </div>
+    </Cascada>
   );
 }

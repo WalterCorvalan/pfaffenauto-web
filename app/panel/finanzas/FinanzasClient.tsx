@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { PanelSkeletonTabla } from "@/components/panel/PanelSkeleton";
 import { fmt, CATEGORIAS_GASTO_FIJO, CATEGORIAS_GASTO_VARIABLE } from "./tabs/shared";
+import { Crossfade } from "@/components/ui/movimiento";
 
 // Dynamic (sin SSR) -- Finanzas tiene ~20 tabs y antes se importaban todos
 // estático de una en el bundle inicial, aunque solo se ve uno a la vez. Cada
@@ -471,6 +472,7 @@ export default function FinanzasClient({
         </div>
       )}
 
+      <Crossfade id={tab}>
       {tab === "resumen" && !puedeVerLiquidacion && (
         <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-6 text-sm text-amber-700 dark:text-amber-300">No tenés permiso para ver el margen/ganancia de la agencia. Pedile a un admin que te lo habilite en Configuración &gt; Empresa si lo necesitás.</div>
       )}
@@ -573,6 +575,7 @@ export default function FinanzasClient({
       )}
 
       {tab === "libros" && <LibrosContablesTab cuentas={cuentas} />}
+      </Crossfade>
     </div>
   );
 }

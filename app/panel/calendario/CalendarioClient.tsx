@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { ChevronLeft, ChevronRight, CalendarPlus, CalendarDays, Search, X, Info } from "lucide-react";
 import NuevoEventoModal, { TIPOS_EVENTO } from "./NuevoEventoModal";
+import { Crossfade } from "@/components/ui/movimiento";
 
 interface Perfil {
   id: string;
@@ -168,6 +169,7 @@ export default function CalendarioClient({ eventosIniciales, perfiles, miId }: {
             </div>
           )}
 
+          <Crossfade id={vista}>
           {vista === "mes" && (
             <>
               <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 mb-2">
@@ -239,6 +241,7 @@ export default function CalendarioClient({ eventosIniciales, perfiles, miId }: {
               )}
             </div>
           )}
+          </Crossfade>
 
           {vista === "mes" && diaSeleccionado && (
             <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/10">

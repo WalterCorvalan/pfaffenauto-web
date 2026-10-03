@@ -13,6 +13,7 @@ import NuevoClienteModal from "./NuevoClienteModal";
 import DisponibilidadModal from "./DisponibilidadModal";
 import { renderSaludoWhatsApp } from "@/lib/panel/whatsappSaludo";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
+import { Crossfade, Compartido } from "@/components/ui/movimiento";
 
 interface Cliente {
   id: string; nombre: string; tipo: string; sexo: string | null; dni_cuit: string | null;
@@ -497,6 +498,7 @@ export default function ClientesClient({
             })}
           </div>
 
+          <Crossfade id={vista}>
           {/* ===================== LISTA ===================== */}
           {vista === "lista" && (
             <>
@@ -558,7 +560,7 @@ export default function ClientesClient({
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2">
                             <p className={`text-sm font-bold truncate flex items-center gap-1.5 ${vacio ? "text-slate-400 italic" : "text-slate-900 dark:text-white"}`}>
-                              {vacio ? "Cliente sin nombre" : c.nombre}
+                              {vacio ? "Cliente sin nombre" : <Compartido id={`nombre-cliente-${c.id}`}>{c.nombre}</Compartido>}
                               {c.estado_relacion === "cliente" && <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 shrink-0 not-italic">Cliente</span>}
                             </p>
                             <span className={`text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap shrink-0 ${ORIGEN_COLOR[c.origen] || "bg-slate-100 dark:bg-white/10 text-slate-500 border-slate-200 dark:border-white/10"}`}>{c.origen}</span>
@@ -646,7 +648,7 @@ export default function ClientesClient({
                     return (
                       <div key={c.id} onClick={() => setEditando(c)} className="flex items-start justify-between gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.02]">
                         <div className="min-w-0 flex-1">
-                          <p className={`text-sm font-bold truncate ${vacio ? "text-slate-400 italic" : "text-slate-900 dark:text-white"}`}>{vacio ? "Cliente sin nombre" : c.nombre}</p>
+                          <p className={`text-sm font-bold truncate ${vacio ? "text-slate-400 italic" : "text-slate-900 dark:text-white"}`}>{vacio ? "Cliente sin nombre" : <Compartido id={`nombre-cliente-${c.id}`}>{c.nombre}</Compartido>}</p>
                           <p className="text-[11px] text-slate-400 mt-0.5">{c.vendedor_id ? perfilMap[c.vendedor_id] : "Sin asignar"} · {c.origen}</p>
                           {interes && <p className="text-xs text-slate-500 dark:text-slate-300 mt-1 truncate">{interes}</p>}
                           <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
@@ -979,6 +981,7 @@ export default function ClientesClient({
               </>
             )
           )}
+          </Crossfade>
         </div>
       </div>
 

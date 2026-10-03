@@ -9,6 +9,7 @@ import {
 import EscanearBoletoModal from "./EscanearBoletoModal";
 import ImportarExcelModal from "./ImportarExcelModal";
 import { hoyLocalISO, parseFechaLocal, fmtFechaLocal } from "@/lib/panel/fechas";
+import { Crossfade } from "@/components/ui/movimiento";
 
 interface Compra {
   id: string; comprador_nombre: string; comprador_telefono: string | null; comprador_dni: string | null;
@@ -209,6 +210,7 @@ export default function PostventaClient({
                 {tab === "recontactos" ? `Recontacto de clientes: service, VTV, seguro, garantía y seguimiento. ${recordatoriosFiltrados.length} pendientes.` : `Todos los que ya te compraron un auto. ${compras.length} clientes.`}
               </p>
             </div>
+            <Crossfade id={tab}>
             {tab === "recontactos" ? (
               <select value={tipoFiltro} onChange={(e) => setTipoFiltro(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
                 <option value="">Todos los tipos</option>
@@ -220,6 +222,7 @@ export default function PostventaClient({
                 <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar cliente o auto..." className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2 pl-9 pr-3 text-xs outline-none focus:border-rose-500 text-slate-900 dark:text-white" />
               </div>
             )}
+            </Crossfade>
           </div>
 
           <div className="flex gap-1 mb-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-1 w-fit">

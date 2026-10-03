@@ -7,6 +7,7 @@ import { List, Columns3, TrendingUp, Trophy, Filter, Search, Radar, MessageCircl
 import LeadDetailModal, { CANALES_ORIGEN } from "@/components/panel/conversaciones/LeadDetailModal";
 import NuevoLeadManualModal from "./NuevoLeadManualModal";
 import { PipelineLeads, IngresosLeads, RankingLeads } from "./LeadsVistas";
+import { Crossfade, Compartido } from "@/components/ui/movimiento";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 interface Sucursal { id: string; nombre: string }
@@ -297,6 +298,7 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
         })}
       </div>
 
+      <Crossfade id={modo} className="flex-1 min-h-0 flex flex-col" classNameInterno="flex-1 min-h-0 flex flex-col w-full">
       {modo === "pipeline" && <PipelineLeads leads={clasificados} vendedores={vendedores} miId={miId} onAbrir={abrirDesdeVista} onMovido={actualizarUno} />}
       {modo === "ingresos" && <IngresosLeads leads={clasificados} vendedores={vendedores} />}
       {modo === "ranking" && puedeVerRanking && <RankingLeads leads={clasificados} vendedores={vendedores} ventasCerradas={ventasCerradas} />}
@@ -413,7 +415,7 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-1.5">
                       <span className="font-bold text-[13px] truncate flex items-center gap-1 text-slate-900 dark:text-white">
-                        <Icon className={`w-3 h-3 shrink-0 ${ORIGEN_COLOR[c.origen]}`} /> {c.nombre}
+                        <Icon className={`w-3 h-3 shrink-0 ${ORIGEN_COLOR[c.origen]}`} /> <Compartido id={`nombre-lead-${c.id}`}>{c.nombre}</Compartido>
                       </span>
                       <span className="text-[10px] text-slate-400 whitespace-nowrap shrink-0">{c.last_message_at ? formatDia(c.last_message_at) : ""}</span>
                     </div>
@@ -467,6 +469,7 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
       )}
     </div>
       )}
+      </Crossfade>
     </div>
   );
 }

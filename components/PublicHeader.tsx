@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -8,7 +8,8 @@ import {
   Menu, X, Heart, ChevronRight, Search, Sparkles, 
   Landmark, Home, CarFront, ShieldCheck, Tag 
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { CURVA } from "@/components/ui/movimiento";
 import BuscadorSugerencias from "@/components/BuscadorSugerencias";
 import { agregarBusquedaReciente } from "@/lib/busquedasRecientes";
 
@@ -18,6 +19,11 @@ export default function PublicHeader() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [buscadorEnfocado, setBuscadorEnfocado] = useState(false);
+  // Buscador del celular: un botón redondo que se estira hasta ser la barra de búsqueda (la MISMA caja cambia de tamaño).
+  const [buscadorMovil, setBuscadorMovil] = useState(false);
+  const [anchoBuscadorMovil, setAnchoBuscadorMovil] = useState(300);
+  const inputMovilRef = useRef<HTMLInputElement>(null);
+  const reducidoMovimiento = useReducedMotion();
 
   const pathname = usePathname();
   const router = useRouter();
@@ -282,6 +288,46 @@ export default function PublicHeader() {
             <span className="absolute inset-0 w-[150%] h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[150%] group-hover:animate-[shimmer_1.5s_infinite]"></span>
             Cotizá Tu Usado <ChevronRight className="w-4 h-4" />
           </Link>
+
+          {/* Buscador del celular (md para arriba hay un buscador fijo en el centro del encabezado) */}
+          <div className="relative md:hidden w-10 h-10 shrink-0 mr-1">
+            <motion.form
+              onSubmit={(e) => { handleSearch(e); setBuscadorMovil(false); }}
+              initial={false}
+              animate={{ width: buscadorMovil ? anchoBuscadorMovil : 40 }}
+              transition={{ duration: reducidoMovimiento ? 0 : 0.32, ease: CURVA }}
+              className="absolute right-0 top-0 h-10 z-50 rounded-full overflow-hidden bg-white/70 dark:bg-[#15151b]/90 backdrop-blur-md border border-white/60 dark:border-white/15 shadow-sm"
+            >
+              <button
+                type={buscadorMovil ? "submit" : "button"}
+                onClick={() => {
+                  if (buscadorMovil) return;
+                  setAnchoBuscadorMovil(Math.min(window.innerWidth - 32 - 52, 440));
+                  setBuscadorMovil(true);
+                  setTimeout(() => inputMovilRef.current?.focus(), 160);
+                }}
+                aria-label={buscadorMovil ? "Buscar" : "Abrir el buscador"}
+                className="absolute left-0 top-0 w-10 h-10 flex items-center justify-center text-slate-700 dark:text-slate-200"
+              >
+                <Search className="w-[18px] h-[18px]" />
+              </button>
+              <input
+                ref={inputMovilRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Escape") setBuscadorMovil(false); }}
+                placeholder="Buscá por marca, modelo..."
+                tabIndex={buscadorMovil ? 0 : -1}
+                className={`h-full w-full bg-transparent pl-10 pr-10 text-sm text-navy dark:text-white outline-none placeholder:text-slate-500 transition-opacity duration-200 ${buscadorMovil ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+              />
+              {buscadorMovil && (
+                <button type="button" onClick={() => setBuscadorMovil(false)} aria-label="Cerrar el buscador" className="absolute right-0 top-0 w-10 h-10 flex items-center justify-center text-slate-500 dark:text-slate-300">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </motion.form>
+          </div>
 
           <button
             onClick={toggleMenu}

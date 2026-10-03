@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Bot } from "lucide-react";
 import RodiBandeja from "./RodiBandeja";
 import RodiLeadsTab from "./RodiLeadsTab";
+import { Crossfade } from "@/components/ui/movimiento";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 
@@ -34,7 +35,9 @@ export default function RodiShell({ conversacionesIniciales, vendedores, miId }:
       </div>
 
       <div className="flex-1 min-h-0">
+        <Crossfade id={tab} className="h-full" classNameInterno="h-full">
         {tab === "bandeja" ? <RodiBandeja conversacionesIniciales={conversacionesIniciales} vendedores={vendedores} miId={miId} /> : <RodiLeadsTab conversacionesIniciales={conversacionesIniciales} vendedores={vendedores} miId={miId} />}
+        </Crossfade>
       </div>
     </div>
   );
