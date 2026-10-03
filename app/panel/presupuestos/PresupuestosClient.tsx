@@ -146,11 +146,11 @@ export default function PresupuestosClient({
                   {label}
                 </button>
               ))}
-              <div className="flex items-center gap-1.5 ml-1">
+              <div className="flex items-center gap-1.5 ml-1 w-full sm:w-auto">
                 <span className="text-[11px] font-bold text-slate-400">Desde</span>
-                <input type="date" value={desdeCustom} onChange={(e) => setDesdeCustom(e.target.value)} className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-[11px] text-slate-600 dark:text-slate-300 outline-none" />
+                <input type="date" value={desdeCustom} onChange={(e) => setDesdeCustom(e.target.value)} className="min-w-0 flex-1 sm:flex-none bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-[11px] text-slate-600 dark:text-slate-300 outline-none" />
                 <span className="text-[11px] font-bold text-slate-400">Hasta</span>
-                <input type="date" value={hastaCustom} onChange={(e) => setHastaCustom(e.target.value)} className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-[11px] text-slate-600 dark:text-slate-300 outline-none" />
+                <input type="date" value={hastaCustom} onChange={(e) => setHastaCustom(e.target.value)} className="min-w-0 flex-1 sm:flex-none bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-[11px] text-slate-600 dark:text-slate-300 outline-none" />
               </div>
               {hayFiltrosActivos && (
                 <button onClick={limpiarFiltros} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10">

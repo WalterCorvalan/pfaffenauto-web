@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // Grupos calcados del índice del manual del CRM viejo — todo lo que todavía
 // no construimos queda listado pero deshabilitado, para que el mapa completo
@@ -406,6 +406,7 @@ export default function PanelLayoutClient({
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const swipeInicioX = useRef<number | null>(null);
   const [colapsado, setColapsado] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [nombre, setNombre] = useState("Cargando...");
@@ -682,8 +683,17 @@ export default function PanelLayoutClient({
           <NotificationBell miId={miId || ""} />
         </div>
 
+        {/* Celular: tocar fuera del menú lo cierra (y deslizar el menú hacia la izquierda también) */}
+        {isOpen && <div className="md:hidden print:hidden fixed inset-x-0 bottom-0 top-14 bg-black/40 z-30" onClick={() => setIsOpen(false)} aria-hidden="true" />}
+
         {/* SIDEBAR */}
         <aside
+          onTouchStart={(e) => { swipeInicioX.current = e.touches[0]?.clientX ?? null; }}
+          onTouchEnd={(e) => {
+            const inicio = swipeInicioX.current; swipeInicioX.current = null;
+            const fin = e.changedTouches[0]?.clientX;
+            if (isOpen && inicio !== null && fin !== undefined && inicio - fin > 60) setIsOpen(false);
+          }}
           className={`print:hidden fixed md:relative top-14 md:top-0 left-0 h-[calc(100vh-3.5rem)] md:h-full ${colapsado ? "md:w-[68px]" : "md:w-[230px]"} w-[230px] bg-white dark:bg-[#111] border-r border-slate-200 dark:border-white/10 flex flex-col shrink-0 transform transition-all duration-200 z-40 ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
         >
           <div

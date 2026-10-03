@@ -82,13 +82,13 @@ export default function DashboardClient(props: Props) {
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-black text-slate-900 dark:text-white">Hola, {props.miNombre}</h1>
-          <p className="text-sm text-slate-400 capitalize">Bienvenido, <span className="font-bold text-slate-500 dark:text-slate-300">{props.miNombre}</span> · {hoyLabel}</p>
+          <p className="text-sm text-slate-400 first-letter:uppercase">Bienvenido, <span className="font-bold text-slate-500 dark:text-slate-300">{props.miNombre}</span> · {hoyLabel}</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Selector de mes: lo "mensual" (ventas, ranking, caja, gastos) sigue al mes elegido; lo de hoy (stock, saldos, urgentes) no cambia. */}
           <div className="flex items-center bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg">
             <Link href={`/panel?mes=${props.mesSeleccionado.anterior}`} aria-label="Mes anterior" className="p-2 text-slate-500 hover:text-slate-900 dark:hover:text-white"><ChevronLeft className="w-4 h-4" /></Link>
-            <span className="px-2 text-xs font-bold capitalize text-slate-700 dark:text-slate-200 min-w-[110px] text-center">{props.mesSeleccionado.label}</span>
+            <span className="px-2 text-xs font-bold first-letter:uppercase text-slate-700 dark:text-slate-200 min-w-[110px] text-center">{props.mesSeleccionado.label}</span>
             {props.mesSeleccionado.siguiente
               ? <Link href={props.mesSeleccionado.siguiente ? `/panel?mes=${props.mesSeleccionado.siguiente}` : "/panel"} aria-label="Mes siguiente" className="p-2 text-slate-500 hover:text-slate-900 dark:hover:text-white"><ChevronRight className="w-4 h-4" /></Link>
               : <span className="p-2 text-slate-300 dark:text-slate-600"><ChevronRight className="w-4 h-4" /></span>}

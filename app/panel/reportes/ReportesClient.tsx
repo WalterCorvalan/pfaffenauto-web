@@ -261,7 +261,7 @@ export default function ReportesClient(props: Props) {
       </div>
 
       {/* Competencia del mes */}
-      <div className="rounded-2xl p-5 bg-gradient-to-br from-indigo-700 to-violet-700 text-white">
+      <div className="rounded-2xl p-3 sm:p-5 bg-gradient-to-br from-indigo-700 to-violet-700 text-white">
         <div className="flex items-center justify-between mb-3">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-200">Competencia del mes</p>
@@ -270,13 +270,13 @@ export default function ReportesClient(props: Props) {
           <Trophy className="w-6 h-6 text-indigo-200" />
         </div>
         <div className="bg-white/10 rounded-xl overflow-x-auto mb-3">
-          <table className="w-full text-left text-sm min-w-[420px]">
+          <table className="w-full text-left text-sm sm:min-w-[420px]">
             <thead>
               <tr className="text-[10px] uppercase tracking-widest text-indigo-200">
-                <th className="px-3 py-2 font-bold">Vendedor</th>
-                <th className="px-3 py-2 font-bold text-right">Ventas mes</th>
-                <th className="px-3 py-2 font-bold text-right">Consig. mes</th>
-                <th className="px-3 py-2 font-bold text-right">Bono</th>
+                <th className="px-1 sm:px-3 py-2 font-bold">Vendedor</th>
+                <th className="px-1 sm:px-3 py-2 font-bold text-right">Ventas mes</th>
+                <th className="px-1 sm:px-3 py-2 font-bold text-right">Consig. mes</th>
+                <th className="px-1 sm:px-3 py-2 font-bold text-right">Bono</th>
               </tr>
             </thead>
             <tbody>
@@ -285,10 +285,10 @@ export default function ReportesClient(props: Props) {
                   {/* Sin ventas, no hay primer/segundo/tercer puesto real que festejar
                       -- antes el orden de la consulta alcanzaba para dar medalla aunque
                       todos estuvieran en cero. */}
-                  <td className="px-3 py-2 font-bold">{Number(r.ventas_equivalentes) > 0 && i === 0 ? "🥇" : Number(r.ventas_equivalentes) > 0 && i === 1 ? "🥈" : Number(r.ventas_equivalentes) > 0 && i === 2 ? "🥉" : "•"} {r.nombre}{r.vendedor_id === miId ? " (vos)" : ""}</td>
-                  <td className="px-3 py-2 text-right font-mono">{Number(r.ventas_equivalentes)}</td>
-                  <td className="px-3 py-2 text-right font-mono">{r.consignaciones}</td>
-                  <td className="px-3 py-2 text-right text-indigo-200 text-xs">{Number(r.consignaciones) > 0 ? proximoBono(r.consignaciones) : "Sin consignaciones"}</td>
+                  <td className="px-1 sm:px-3 py-2 font-bold">{Number(r.ventas_equivalentes) > 0 && i === 0 ? "🥇" : Number(r.ventas_equivalentes) > 0 && i === 1 ? "🥈" : Number(r.ventas_equivalentes) > 0 && i === 2 ? "🥉" : "•"} {r.nombre}{r.vendedor_id === miId ? " (vos)" : ""}</td>
+                  <td className="px-1 sm:px-3 py-2 text-right font-mono">{Number(r.ventas_equivalentes)}</td>
+                  <td className="px-1 sm:px-3 py-2 text-right font-mono">{r.consignaciones}</td>
+                  <td className="px-1 sm:px-3 py-2 text-right text-indigo-200 text-xs">{Number(r.consignaciones) > 0 ? proximoBono(r.consignaciones) : "Sin consignaciones"}</td>
                 </tr>
               ))}
               {ranking.length === 0 && <tr><td colSpan={4} className="px-3 py-4 text-center text-indigo-200 text-xs">Sin vendedores activos.</td></tr>}
@@ -307,7 +307,7 @@ export default function ReportesClient(props: Props) {
       </div>
 
       {/* Ranking de velocidad */}
-      <div className="rounded-2xl p-5 bg-gradient-to-br from-teal-700 to-cyan-800 text-white">
+      <div className="rounded-2xl p-3 sm:p-5 bg-gradient-to-br from-teal-700 to-cyan-800 text-white">
         <div className="flex items-center justify-between mb-3">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-teal-200">Ranking de velocidad</p>
@@ -319,24 +319,24 @@ export default function ReportesClient(props: Props) {
           <p className="text-center text-teal-200 text-xs py-4">Sin leads asignados este mes.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs min-w-[500px]">
+            <table className="w-full text-left text-[11px] sm:text-xs sm:min-w-[500px]">
               <thead>
-                <tr className="text-[10px] uppercase tracking-widest text-teal-200">
-                  <th className="px-3 py-2 font-bold">Vendedor</th>
-                  <th className="px-3 py-2 font-bold text-right">Tiempo medio</th>
-                  <th className="px-3 py-2 font-bold text-right">% &lt;1h</th>
-                  <th className="px-3 py-2 font-bold text-right">Contactados</th>
-                  <th className="px-3 py-2 font-bold text-right">Sin contactar</th>
-                  <th className="px-3 py-2 font-bold text-right">Soltados</th>
+                <tr className="text-[9px] sm:text-[10px] uppercase tracking-tight sm:tracking-widest text-teal-200">
+                  <th className="px-1 sm:px-3 py-2 font-bold">Vendedor</th>
+                  <th className="px-1 sm:px-3 py-2 font-bold text-right">Tiempo <span className="hidden sm:inline">medio</span></th>
+                  <th className="px-1 sm:px-3 py-2 font-bold text-right">% &lt;1h</th>
+                  <th className="px-1 sm:px-3 py-2 font-bold text-right">Contact.</th>
+                  <th className="px-1 sm:px-3 py-2 font-bold text-right">Sin contact.</th>
+                  <th className="px-1 sm:px-3 py-2 font-bold text-right">Soltados</th>
                 </tr>
               </thead>
               <tbody>
                 {rankingVelocidad.map((r: any, i: number) => (
                   <tr key={r.vendedor_id} className={i % 2 === 0 ? "bg-white/5" : ""}>
-                    <td className="px-3 py-2 font-bold">{r.vendedor_nombre}</td>
-                    <td className="px-3 py-2 text-right font-mono">{r.tiempo_medio_minutos != null ? `${r.tiempo_medio_minutos}m` : "—"}</td>
-                    <td className="px-3 py-2 text-right font-mono">{r.pct_bajo_1h != null ? `${r.pct_bajo_1h}%` : "—"}</td>
-                    <td className="px-3 py-2 text-right font-mono">{r.contactados}</td>
+                    <td className="px-1 sm:px-3 py-2 font-bold">{r.vendedor_nombre}</td>
+                    <td className="px-1 sm:px-3 py-2 text-right font-mono">{r.tiempo_medio_minutos != null ? `${r.tiempo_medio_minutos}m` : "—"}</td>
+                    <td className="px-1 sm:px-3 py-2 text-right font-mono">{r.pct_bajo_1h != null ? `${r.pct_bajo_1h}%` : "—"}</td>
+                    <td className="px-1 sm:px-3 py-2 text-right font-mono">{r.contactados}</td>
                     <td className={`px-3 py-2 text-right font-mono ${r.sin_contactar > 0 ? "text-rose-300 font-bold" : ""}`}>{r.sin_contactar}</td>
                     <td className={`px-3 py-2 text-right font-mono ${r.soltados > 0 ? "text-rose-300 font-bold" : ""}`}>{r.soltados}</td>
                   </tr>
@@ -348,7 +348,7 @@ export default function ReportesClient(props: Props) {
       </div>
 
       {/* Proyección del mes */}
-      <div className="rounded-2xl p-5 bg-gradient-to-br from-amber-600 to-orange-700 text-white">
+      <div className="rounded-2xl p-3 sm:p-5 bg-gradient-to-br from-amber-600 to-orange-700 text-white">
         <div className="flex items-center justify-between mb-3">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-amber-100">Proyección del mes</p>
@@ -363,24 +363,24 @@ export default function ReportesClient(props: Props) {
           <p className="text-center text-amber-100 text-xs py-4">Sin vendedores activos.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs min-w-[480px]">
+            <table className="w-full text-left text-[11px] sm:text-xs sm:min-w-[480px]">
               <thead>
-                <tr className="text-[10px] uppercase tracking-widest text-amber-100">
-                  <th className="px-3 py-2 font-bold">Vendedor</th>
-                  <th className="px-3 py-2 font-bold text-right">Cerradas</th>
-                  <th className="px-3 py-2 font-bold text-right">Pipeline abierto</th>
-                  <th className="px-3 py-2 font-bold text-right">Conversión hist.</th>
-                  <th className="px-3 py-2 font-bold text-right">Proyectadas</th>
+                <tr className="text-[9px] sm:text-[10px] uppercase tracking-tight sm:tracking-widest text-amber-100">
+                  <th className="px-1 sm:px-3 py-2 font-bold">Vendedor</th>
+                  <th className="px-1 sm:px-3 py-2 font-bold text-right">Cerradas</th>
+                  <th className="px-1 sm:px-3 py-2 font-bold text-right">Pipeline</th>
+                  <th className="px-1 sm:px-3 py-2 font-bold text-right">Conv. hist.</th>
+                  <th className="px-1 sm:px-3 py-2 font-bold text-right">Proyectadas</th>
                 </tr>
               </thead>
               <tbody>
                 {props.proyeccionVentasInicial.map((r: any, i: number) => (
                   <tr key={r.vendedor_id} className={i % 2 === 0 ? "bg-white/5" : ""}>
-                    <td className="px-3 py-2 font-bold">{r.nombre}{r.vendedor_id === miId ? " (vos)" : ""}</td>
-                    <td className="px-3 py-2 text-right font-mono">{r.ventas_cerradas_mes}</td>
-                    <td className="px-3 py-2 text-right font-mono">{r.pipeline_actual}</td>
-                    <td className="px-3 py-2 text-right font-mono">{r.tasa_conversion_pct}%</td>
-                    <td className="px-3 py-2 text-right font-mono font-bold">{r.proyeccion}</td>
+                    <td className="px-1 sm:px-3 py-2 font-bold">{r.nombre}{r.vendedor_id === miId ? " (vos)" : ""}</td>
+                    <td className="px-1 sm:px-3 py-2 text-right font-mono">{r.ventas_cerradas_mes}</td>
+                    <td className="px-1 sm:px-3 py-2 text-right font-mono">{r.pipeline_actual}</td>
+                    <td className="px-1 sm:px-3 py-2 text-right font-mono">{r.tasa_conversion_pct}%</td>
+                    <td className="px-1 sm:px-3 py-2 text-right font-mono font-bold">{r.proyeccion}</td>
                   </tr>
                 ))}
               </tbody>

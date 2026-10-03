@@ -173,13 +173,13 @@ export default function ConsignacionesClient({ consignacionesIniciales, perfiles
 
   return (
     <div className="p-6">
-      <div className="flex items-start justify-between mb-1">
+      <div className="flex items-start justify-between gap-2 mb-1">
         <div>
           <h1 className="text-xl font-bold flex items-center gap-2"><img src="/icons/panel/consignaciones.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Consignaciones</h1>
           <p className="text-sm text-slate-400">{consignaciones.length} consignación{consignaciones.length === 1 ? "" : "es"} · {porContactar} por completar · {publicadas} publicadas</p>
         </div>
-        <button onClick={nuevaConsignacion} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white shadow-sm">
-          <Plus className="w-4 h-4" /> Nueva consignación
+        <button onClick={nuevaConsignacion} className="flex items-center gap-1.5 shrink-0 whitespace-nowrap px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white shadow-sm">
+          <Plus className="w-4 h-4" /> <span className="sm:hidden">Nueva</span><span className="hidden sm:inline">Nueva consignación</span>
         </button>
       </div>
 

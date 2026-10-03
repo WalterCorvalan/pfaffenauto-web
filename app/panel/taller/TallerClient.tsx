@@ -45,33 +45,33 @@ export default function TallerClient({
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <header className="flex flex-col border-b border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02] shrink-0 pt-6 px-6">
-        <div className="flex items-center justify-between pb-6">
-          <div className="flex items-center gap-3">
-            <Wrench className="w-6 h-6 text-[#0145F2]" />
+        <div className="flex items-center justify-between gap-2 pb-4 sm:pb-6">
+          <div className="flex items-center gap-3 min-w-0">
+            <Wrench className="hidden sm:block w-6 h-6 text-[#0145F2]" />
             <div>
               <h1 className="text-xl font-black text-slate-900 dark:text-white leading-tight flex items-center gap-2"><img src="/icons/panel/taller.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Taller</h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="hidden sm:block text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Órdenes de trabajo del taller mecánico.
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <Link
               href="/panel/taller/movil"
               title="Vista para celular"
-              className="p-2.5 text-slate-500 hover:text-slate-900 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors border border-slate-200 dark:border-white/10"
+              className="p-2 sm:p-2.5 text-slate-500 hover:text-slate-900 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors border border-slate-200 dark:border-white/10"
             >
               <Smartphone className="w-4 h-4" />
             </Link>
             <button
               onClick={() => setModalConfig(true)}
-              className="p-2.5 text-slate-500 hover:text-slate-900 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors border border-slate-200 dark:border-white/10"
+              className="p-2 sm:p-2.5 text-slate-500 hover:text-slate-900 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors border border-slate-200 dark:border-white/10"
             >
               <Settings className="w-4 h-4" />
             </button>
             <button
               onClick={() => setModalNuevaOT(true)}
-              className="flex items-center gap-2 bg-[#0145F2] hover:bg-[#0138c9] text-white font-bold text-sm px-4 py-2.5 rounded-xl transition-colors"
+              className="flex items-center gap-1.5 sm:gap-2 whitespace-nowrap bg-[#0145F2] hover:bg-[#0138c9] text-white font-bold text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-colors"
             >
               <Plus className="w-4 h-4" /> Nueva OT
             </button>

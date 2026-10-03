@@ -203,8 +203,8 @@ export default function ComisionesClient({
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Control de pagos, bonos y reseñas</p>
             </div>
           </div>
-          <button onClick={() => setModalBono(true)} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-4 py-2.5 rounded-xl transition-colors">
-            <Plus className="w-4 h-4" /> {esAdminOFinanzas ? "Cargar Comisión Manual" : "Pedir Comisión Manual"}
+          <button onClick={() => setModalBono(true)} className="flex items-center gap-1.5 shrink-0 whitespace-nowrap bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-colors">
+            <Plus className="w-4 h-4" /> <span className="sm:hidden">{esAdminOFinanzas ? "Cargar" : "Pedir"}</span><span className="hidden sm:inline">{esAdminOFinanzas ? "Cargar Comisión Manual" : "Pedir Comisión Manual"}</span>
           </button>
         </div>
 

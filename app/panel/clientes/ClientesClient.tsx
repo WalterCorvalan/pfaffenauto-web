@@ -223,6 +223,8 @@ export default function ClientesClient({
   const [vista, setVista] = useState<Vista>("lista");
   const [tabLista, setTabLista] = useState<TabLista>("todos");
   const [origenFiltro, setOrigenFiltro] = useState<string | null>(null);
+  // Celular: los filtros de origen/sexo/ingresos quedan detrás de un botón "Filtros" para no ocupar la pantalla.
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
   const [sexoFiltro, setSexoFiltro] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   // Búsqueda en vivo contra la base desde 2+ caracteres -- el array `clientes`
@@ -498,7 +500,7 @@ export default function ClientesClient({
           {/* ===================== LISTA ===================== */}
           {vista === "lista" && (
             <>
-              <div className="flex items-center gap-2 mb-3 text-xs">
+              <div className={`${filtrosAbiertos ? "flex" : "hidden md:flex"} items-center gap-2 mb-3 text-xs flex-wrap`}>
                 <span className="flex items-center gap-1 text-slate-400 font-semibold"><TrendingUp className="w-3.5 h-3.5" /> Ingresaron:</span>
                 {[["Hoy", ingresosHoy], ["Ayer", ingresosAyer], ["7 días", ingresos7], ["Este mes", ingresosMes]].map(([label, n]) => (
                   <button key={label as string} onClick={() => setVista("ingresos")} className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10">
@@ -507,13 +509,13 @@ export default function ClientesClient({
                 ))}
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 mb-3">
+              <div className="flex md:flex-wrap items-center gap-2 mb-3 overflow-x-auto md:overflow-visible -mx-1 px-1 pb-1 md:pb-0">
                 {TABS_LISTA.map((t) => (
-                  <button key={t.value} onClick={() => setTabLista(t.value)} className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${tabLista === t.value ? "bg-slate-800 dark:bg-white text-white dark:text-slate-900 border-slate-800 dark:border-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>{t.label}</button>
+                  <button key={t.value} onClick={() => setTabLista(t.value)} className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-bold border transition-colors ${tabLista === t.value ? "bg-slate-800 dark:bg-white text-white dark:text-slate-900 border-slate-800 dark:border-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>{t.label}</button>
                 ))}
               </div>
 
-              <div className="flex flex-wrap items-center gap-3 mb-4">
+              <div className={`${filtrosAbiertos ? "flex" : "hidden md:flex"} flex-wrap items-center gap-3 mb-4`}>
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <button onClick={() => setOrigenFiltro(null)} className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${!origenFiltro ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}>Todos</button>
                   {["Instagram", "Facebook", "MercadoLibre", "Rodi", "Messenger", "Web", "Salón", "WhatsApp"].map((o) => (
@@ -528,9 +530,12 @@ export default function ClientesClient({
                 </div>
               </div>
 
-              <div className="relative mb-4 max-w-md">
+              <div className="flex items-center gap-2 mb-4 max-w-md">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                 <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar por nombre, email o teléfono..." className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2 pl-9 pr-3 text-xs outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400" />
+              </div>
+              <button onClick={() => setFiltrosAbiertos((v) => !v)} className={`md:hidden shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold ${filtrosAbiertos || origenFiltro || sexoFiltro ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>Filtros{(origenFiltro ? 1 : 0) + (sexoFiltro ? 1 : 0) > 0 ? ` (${(origenFiltro ? 1 : 0) + (sexoFiltro ? 1 : 0)})` : ""}</button>
               </div>
 
               {clientesFiltrados.length === 0 ? (
@@ -575,7 +580,7 @@ export default function ClientesClient({
                             <p className="text-[10px] text-slate-400 mt-0.5">Último contacto: {fmtFecha(c.ultimo_contacto)} · {col?.label}</p>
                           ) : null}
                         </div>
-                        <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex flex-col sm:flex-row items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
                           {telLimpio && <a href={`https://wa.me/${telLimpio}?text=${encodeURIComponent(mensajeWhatsApp(c.nombre))}`} target="_blank" rel="noopener noreferrer" title="Contactar por WhatsApp" className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg inline-flex shrink-0"><MessageCircle className="w-3.5 h-3.5" /></a>}
                           <button onClick={() => toggleContacto(c)} disabled={actualizando === c.id} title={contactado ? "Marcar como Sin contactar" : "Marcar como Contactado"} className={`p-2 rounded-lg border disabled:opacity-50 shrink-0 ${contactado ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/20" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/20"}`}>
                             {contactado ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />}
