@@ -6,6 +6,7 @@ import { Settings, Loader2, Download } from "lucide-react";
 import { supabase2 } from "@/lib/supabase/client";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import Toggle from "@/components/panel/Toggle";
+import PrimerosPasos from "./PrimerosPasos";
 import { MODULOS_CATALOGO, SECTORES, SECTOR_LABEL } from "@/lib/panel/modulosCatalogo";
 
 const MODULO_LABEL: Record<string, string> = Object.fromEntries(MODULOS_CATALOGO.map((m) => [m.modulo, m.label]));
@@ -70,6 +71,8 @@ export default function EmpresaClient() {
         <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/configuracion.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Configuración</h1>
         <p className="text-sm text-slate-400">Módulos que usa la agencia y qué ve cada sector.</p>
       </div>
+
+      <PrimerosPasos />
 
       <div className="flex items-center gap-1 border-b border-slate-200 dark:border-white/10">
         <Link href="/panel/configuracion" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500">Usuarios</Link>
@@ -663,7 +666,16 @@ function BrandingConfig() {
           <p className="text-[10px] text-slate-400 mt-1">Apunta a https://www.pfaffencars.com — es un archivo fijo (no se regenera solo). Si algún día cambia el dominio, hay que generar uno nuevo e imprimir de nuevo.</p>
         </div>
         <div>
-          <label className="text-xs font-semibold text-slate-500 block mb-1">Nombre de la agencia</label>
+          <label className="text-xs font-semibold text-slate-500 block mb-1">Color principal del panel</label>
+          <div className="flex items-center gap-3">
+            <input type="color" value={config.branding_color_primario || "#0145F2"} onChange={(e) => guardar({ branding_color_primario: e.target.value.toUpperCase() })} className="h-10 w-14 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent cursor-pointer" />
+            <span className="text-xs font-mono text-slate-500">{config.branding_color_primario || "#0145F2 (azul de siempre)"}</span>
+            {config.branding_color_primario && <button type="button" onClick={() => guardar({ branding_color_primario: null })} className="text-xs font-bold text-slate-500 hover:text-slate-800 dark:hover:text-white underline">Volver al azul de siempre</button>}
+          </div>
+          <p className="text-[10px] text-slate-400 mt-1">Cambia el color de botones, pestañas activas y detalles del panel. Se ve al recargar la página.</p>
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-500 block mb-1">Nombre de la agencia (se ve en el menú y en la pestaña del navegador)</label>
           <input type="text" defaultValue={config.branding_nombre || ""} onBlur={(e) => guardar({ branding_nombre: e.target.value || null })} className={inputClass} />
         </div>
         <div>

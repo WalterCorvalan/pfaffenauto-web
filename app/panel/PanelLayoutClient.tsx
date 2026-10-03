@@ -545,6 +545,31 @@ export default function PanelLayoutClient({
       });
   }, []);
 
+  // Identidad de la empresa (Configuración > Empresa > Branding): nombre, logo y color principal del panel.
+  // Sin nada cargado queda como siempre (Pfaffen Cars, su ícono y el azul de marca).
+  const [branding, setBranding] = useState<{ nombre: string | null; logoUrl: string | null; color: string | null }>({ nombre: null, logoUrl: null, color: null });
+  useEffect(() => {
+    (async () => {
+      let res: { data: any; error: any } = await supabase2.from("configuracion_empresa").select("branding_nombre, branding_logo_url, branding_color_primario").eq("id", true).maybeSingle();
+      // Si la columna del color todavía no existe en la base, se reintenta sin ella.
+      if (res.error) res = await supabase2.from("configuracion_empresa").select("branding_nombre, branding_logo_url").eq("id", true).maybeSingle();
+      if (res.data) setBranding({ nombre: res.data.branding_nombre || null, logoUrl: res.data.branding_logo_url || null, color: res.data.branding_color_primario || null });
+    })();
+  }, []);
+  const nombreEmpresa = branding.nombre || "Pfaffen Cars";
+  // Los títulos de página vienen escritos como "Pantalla | Pfaffen Cars" -- se reemplaza el nombre en la pestaña del navegador.
+  useEffect(() => {
+    const nombre = branding.nombre;
+    if (!nombre || nombre.includes("Pfaffen Cars")) return;
+    const aplicar = () => { if (document.title.includes("Pfaffen Cars")) document.title = document.title.replace("Pfaffen Cars", nombre); };
+    aplicar();
+    const t = document.querySelector("title");
+    if (!t) return;
+    const mo = new MutationObserver(aplicar);
+    mo.observe(t, { childList: true, characterData: true, subtree: true });
+    return () => mo.disconnect();
+  }, [branding.nombre, pathname]);
+
   const itemVisible = (item: { href?: string; modulo?: string }) => {
     if (item.href === "/panel/comisiones" && !comisionesActivas)
       return false;
@@ -652,7 +677,7 @@ export default function PanelLayoutClient({
 
   return (
     <div className={darkMode ? "dark" : ""}>
-      <div className="panel-v2-root flex h-screen w-full bg-[#F8FAFC] dark:bg-[#0A0A0A] text-slate-900 dark:text-slate-100 overflow-hidden print:h-auto print:overflow-visible print:block">
+      <div style={branding.color ? ({ "--marca": branding.color } as React.CSSProperties) : undefined} className="panel-v2-root flex h-screen w-full bg-[#F8FAFC] dark:bg-[#0A0A0A] text-slate-900 dark:text-slate-100 overflow-hidden print:h-auto print:overflow-visible print:block">
         <div className="md:hidden print:hidden fixed top-0 left-0 right-0 h-14 bg-white dark:bg-[#111] border-b border-slate-200 dark:border-white/10 flex items-center gap-2 px-3 z-50">
           <button
             onClick={() => setIsOpen(!isOpen)}
@@ -700,11 +725,11 @@ export default function PanelLayoutClient({
             className={`h-[60px] flex items-center gap-2 border-b border-slate-200 dark:border-white/10 shrink-0 ${colapsado ? "md:px-2 px-4" : "px-4"}`}
           >
             <Link href="/" target="_blank" title="Ver la web pública" className="flex items-center gap-2 min-w-0">
-              <img src="/pfaffen-automotores-icono.webp" alt="Pfaffen Automotores" className="w-8 h-8 rounded-lg object-cover shrink-0" />
+              <img src={branding.logoUrl || "/pfaffen-automotores-icono.webp"} alt={nombreEmpresa} className="w-8 h-8 rounded-lg object-cover shrink-0" />
               <div className={colapsado ? "md:hidden" : ""}>
                 <p className="text-sm font-bold leading-none">Panel</p>
                 <p className="text-[10px] text-slate-400 leading-none mt-0.5">
-                  Pfaffen Cars
+                  {nombreEmpresa}
                 </p>
               </div>
             </Link>

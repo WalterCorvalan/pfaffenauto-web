@@ -3,9 +3,10 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
-import { Filter, Search, Radar, MessageCircle, AtSign, Bot, User, Plus, Radio, Building2, ChevronDown, Flame, Trash2, Megaphone, PanelLeftClose, PanelLeftOpen, ArrowDownWideNarrow, Clock3, Zap } from "lucide-react";
+import { List, Columns3, TrendingUp, Trophy, Filter, Search, Radar, MessageCircle, AtSign, Bot, User, Plus, Radio, Building2, ChevronDown, Flame, Trash2, Megaphone, PanelLeftClose, PanelLeftOpen, ArrowDownWideNarrow, Clock3, Zap } from "lucide-react";
 import LeadDetailModal, { CANALES_ORIGEN } from "@/components/panel/conversaciones/LeadDetailModal";
 import NuevoLeadManualModal from "./NuevoLeadManualModal";
+import { PipelineLeads, IngresosLeads, RankingLeads } from "./LeadsVistas";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 interface Sucursal { id: string; nombre: string }
@@ -21,13 +22,11 @@ interface LeadNormalizado {
 // no manejar dos números distintos en el mismo módulo.
 const DIAS_SIN_RESPUESTA = 2;
 
+// Filtros rápidos de la bandeja: solo 3 (pedido de Walter 3/10/2026). Contactados, Clientes y Perdidos se ven en la pestaña Pipeline.
 const ESTADOS: { value: string; label: string }[] = [
   { value: "todos", label: "Todos" },
   { value: "nuevo", label: "Nuevos" },
-  { value: "asignado", label: "Contactados" },
   { value: "calificando", label: "Interesados" },
-  { value: "convertido", label: "Clientes" },
-  { value: "perdido", label: "Perdidos" },
 ];
 // Punto medio entre la versión original (5 colores distintos, muy
 // "semáforo") y la que le siguió (todo gris, muy apagada): los 3 estados
@@ -150,11 +149,13 @@ function VendedorLeadSelector({
   );
 }
 
-export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucursales, miId, topeAlcanzado = false }: { leadsIniciales: LeadNormalizado[]; vendedores: Perfil[]; sucursales: Sucursal[]; miId: string; topeAlcanzado?: boolean }) {
+export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucursales, miId, topeAlcanzado = false, ventasCerradas = [] }: { leadsIniciales: LeadNormalizado[]; vendedores: Perfil[]; sucursales: Sucursal[]; miId: string; topeAlcanzado?: boolean; ventasCerradas?: { vendedor_id: string | null; fecha_cierre: string | null }[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const misRoles = vendedores.find((v) => v.id === miId)?.roles || [];
   const [leads, setLeads] = useState(leadsIniciales);
+  // Pestañas de arriba: la bandeja de siempre (lista + detalle) o las vistas de tablero/estadísticas (LeadsVistas.tsx).
+  const [modo, setModo] = useState<"lista" | "pipeline" | "ingresos" | "ranking">("lista");
   const [vista, setVista] = useState<"normal" | "sin_respuesta" | "basura">("normal");
   const [filtroEstado, setFiltroEstado] = useState("todos");
   const [filtroOrigen, setFiltroOrigen] = useState<Origen | "todos">("todos");
@@ -273,8 +274,33 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
     ? "bg-sky-50/70 dark:bg-sky-500/10 border-l-2 border-l-[#0145F2] dark:border-l-sky-400"
     : "bg-white dark:bg-transparent border-l-2 border-l-transparent hover:bg-slate-50 dark:hover:bg-white/5";
 
+  const abrirDesdeVista = (id: string, origen: Origen) => { setSeleccionado({ id, origen }); setModo("lista"); };
+  const MODOS = [
+    { v: "lista" as const, label: "Lista", icon: List },
+    { v: "pipeline" as const, label: "Pipeline", icon: Columns3 },
+    { v: "ingresos" as const, label: "Ingresos", icon: TrendingUp },
+    { v: "ranking" as const, label: "Ranking", icon: Trophy },
+  ];
+
   return (
-    <div className="flex w-full h-full text-slate-800 dark:text-slate-200 overflow-hidden">
+    <div className="flex flex-col w-full h-full text-slate-800 dark:text-slate-200 overflow-hidden">
+      <div className={`shrink-0 items-center gap-1 px-2.5 py-2 border-b border-slate-200 dark:border-white/10 bg-white dark:bg-[#111] overflow-x-auto ${seleccionado && modo === "lista" ? "hidden md:flex" : "flex"}`}>
+        {MODOS.map((t) => {
+          const Icon = t.icon;
+          return (
+            <button key={t.v} onClick={() => setModo(t.v)} className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${modo === t.v ? "bg-[#0145F2] text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"}`}>
+              <Icon className="w-3.5 h-3.5" /> {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {modo === "pipeline" && <PipelineLeads leads={clasificados} vendedores={vendedores} miId={miId} onAbrir={abrirDesdeVista} onMovido={actualizarUno} />}
+      {modo === "ingresos" && <IngresosLeads leads={clasificados} vendedores={vendedores} />}
+      {modo === "ranking" && <RankingLeads leads={clasificados} vendedores={vendedores} ventasCerradas={ventasCerradas} />}
+
+      {modo === "lista" && (
+    <div className="flex flex-1 min-h-0 w-full overflow-hidden">
       {/* COLUMNA 1: BANDEJA — mismo criterio visual que app/panel/whatsapp/ChatClient.tsx
           (sidebar angosta, filas con avatar circular, sticky group headers) para que
           este módulo se sienta como una extensión natural del panel de WhatsApp. */}
@@ -436,6 +462,8 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
 
       {showNuevo && (
         <NuevoLeadManualModal vendedores={vendedores} sucursales={sucursales} miId={miId} onClose={() => setShowNuevo(false)} onCreado={onCreadoManual} />
+      )}
+    </div>
       )}
     </div>
   );

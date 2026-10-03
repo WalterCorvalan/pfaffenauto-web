@@ -48,6 +48,7 @@ const ConfigEmpresaSchema = z.object({
   lead_routing_max_reasignaciones: z.coerce.number().min(1).optional(),
   cada_vendedor_ve_solo_sus_clientes: z.boolean().optional(),
   branding_nombre: z.string().trim().max(150).optional().nullable(),
+  branding_color_primario: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional().nullable(),
   branding_domicilio: z.string().trim().max(200).optional().nullable(),
   branding_telefono: z.string().trim().max(40).optional().nullable(),
   branding_cuit: z.string().trim().max(20).optional().nullable(),

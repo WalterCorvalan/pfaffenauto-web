@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { Loader2, Lock, User } from "lucide-react";
@@ -22,6 +22,11 @@ export default function LoginPageV2() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  // Nombre, logo y color de la empresa (Configuración > Empresa > Branding). Sin nada cargado queda Pfaffen Cars.
+  const [marca, setMarca] = useState<{ nombre: string | null; logoUrl: string | null; color: string | null }>({ nombre: null, logoUrl: null, color: null });
+  useEffect(() => { fetch("/api/panel/branding").then((r) => r.json()).then(setMarca).catch(() => {}); }, []);
+  const nombreEmpresa = marca.nombre || "Pfaffen Cars";
+  const colorMarca = marca.color || "#0145F2";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,10 +86,10 @@ export default function LoginPageV2() {
     <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-slate-50 dark:bg-[#0a0a0f] px-4 py-8 sm:py-12">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-[#0145F2] flex items-center justify-center shadow-lg shadow-[#0145F2]/20 mb-4">
-            <span className="text-white font-black text-lg">P</span>
+          <div style={{ backgroundColor: marca.logoUrl ? undefined : colorMarca }} className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg mb-4 overflow-hidden">
+            {marca.logoUrl ? <img src={marca.logoUrl} alt={nombreEmpresa} className="w-full h-full object-cover" /> : <span className="text-white font-black text-lg">{nombreEmpresa.charAt(0).toUpperCase()}</span>}
           </div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white">Pfaffen Cars</h1>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white">{nombreEmpresa}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Ingresá al panel</p>
         </div>
 
@@ -138,7 +143,8 @@ export default function LoginPageV2() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3.5 sm:py-3 rounded-xl text-[15px] sm:text-sm font-bold text-white bg-[#0145F2] hover:bg-[#0138c9] active:bg-[#0130ad] transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+              style={{ backgroundColor: colorMarca }}
+              className="w-full flex items-center justify-center gap-2 py-3.5 sm:py-3 rounded-xl text-[15px] sm:text-sm font-bold text-white hover:brightness-90 active:brightness-75 transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               {loading ? "Ingresando..." : "Iniciar sesión"}
@@ -147,7 +153,7 @@ export default function LoginPageV2() {
         </div>
 
         <p className="text-center text-[11px] text-slate-400 dark:text-slate-600 mt-6">
-          Pfaffen Cars — Panel interno
+          {nombreEmpresa} — Panel interno
         </p>
       </div>
     </div>
