@@ -7,6 +7,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis
 import { fmt, porMoneda, netoOperatoriaAreaPorMoneda, ingresosEgresosOperatoriaAreaPorMoneda, zonaEquilibrio, zonaSigno, CLASE_ZONA_CARD, type ZonaSemaforo } from "./shared";
 import { useRentabilidadPorVehiculo } from "./useRentabilidadPorVehiculo";
 import InfoTooltip from "@/components/panel/InfoTooltip";
+import PatrimonioCard from "./PatrimonioCard";
 
 const COLOR_CUENTA = ["#e11d48", "#6366f1", "#0ea5e9", "#10b981", "#f59e0b", "#a855f7", "#64748b"];
 const COLOR_CUOTAS = { vencidas: "#e11d48", porVencer: "#f59e0b", enFecha: "#10b981" };
@@ -171,6 +172,8 @@ export default function ResumenTab({
 
   return (
     <div className="space-y-5">
+      <PatrimonioCard />
+
       {/* Hero: saldo total por moneda */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {["ARS", "USD"].map((m) => (

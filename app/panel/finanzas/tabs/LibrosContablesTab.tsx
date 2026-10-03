@@ -12,10 +12,10 @@ import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResp
 // movimientos que ya alimenta Finanzas > Movimientos.
 
 const SUBTABS = [
-  { value: "mayor", label: "Libro Mayor", icon: Landmark },
-  { value: "resultados", label: "Estado de Resultados", icon: TrendingUp },
-  { value: "flujo", label: "Flujo de Caja", icon: Activity },
   { value: "diario", label: "Libro Diario", icon: BookOpen },
+  { value: "mayor", label: "Libro Mayor", icon: Landmark },
+  { value: "flujo", label: "Flujo de Caja", icon: Activity },
+  { value: "resultados", label: "Estado de Resultados", icon: TrendingUp },
 ] as const;
 
 function primerDiaMes(offset = 0) {
@@ -25,7 +25,7 @@ function primerDiaMes(offset = 0) {
 function toISO(d: Date) { return d.toISOString().slice(0, 10); }
 
 export default function LibrosContablesTab({ cuentas }: { cuentas: any[] }) {
-  const [sub, setSub] = useState<(typeof SUBTABS)[number]["value"]>("mayor");
+  const [sub, setSub] = useState<(typeof SUBTABS)[number]["value"]>("diario");
   const [desde, setDesde] = useState(toISO(primerDiaMes(0)));
   const [hasta, setHasta] = useState(toISO(new Date(primerDiaMes(1).getTime() - 86400000)));
   const [cuentaId, setCuentaId] = useState(cuentas[0]?.id || "");

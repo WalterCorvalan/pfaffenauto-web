@@ -46,3 +46,10 @@ Si tocás `facturacion/FacturaModal.tsx` (cambiás de nombre o quitás `factura_
 
 - `EgresosCategoriaTab.tsx`: `COLOR_TEXTO`/`COLOR_BORDE` es una paleta decorativa de 5 categorías de gasto (indigo/sky/amber/rose/emerald, sin relación con acciones primarias ni con peligro). El sweep de rebrand había convertido solo `COLOR_TEXTO.rose` a azul, dejando `COLOR_BORDE.rose` en rosa — la tarjeta de "Gastos Varios" quedaba con borde rosa y monto azul. Revertido `COLOR_TEXTO.rose` a rosa para que la pareja vuelva a ser consistente (mismo criterio que los mapas de severidad excluidos del rebrand en `stock/ARCHITECTURE.md`).
 - `ResumenTab.tsx`: el "Neto" (total y por moneda) mostraba el valor negativo en azul (`text-[#0145F2]`) en vez de rojo — quedó atrapado por el regex del sweep al ser `text-rose-*` originalmente. Un neto negativo es una señal de alerta real, no una acción primaria; se revierte a `text-rose-600`.
+
+## Patrimonio diario (fotos)
+
+- Tabla `patrimonio_fotos` (una fila por día y moneda), llenada todas las noches (23:59 Argentina) por la función `tomar_foto_patrimonio()` vía pg_cron `patrimonio-foto-diaria`. Definición en `migraciones/sql_patrimonio_fotos.sql` (se borra del repo una vez corrida, pero la fórmula está documentada en el comentario de la función en la base).
+- Fórmula: cuentas (saldo_cuenta) + stock propio (costo o precio de venta, sin consignaciones) + a cobrar (cuotas, cheques a cobrar, préstamos otorgados) − a pagar (cuotas, comisiones, cheques emitidos no cobrados).
+- UI: `tabs/PatrimonioCard.tsx`, arriba de Finanzas > Resumen. Compara la última foto contra ayer / semana / mes / año; solo hay comparación desde la fecha de la primera foto. Si cambia la fórmula, las fotos viejas no se recalculan.
+- No incluye saldos de ventas aún sin cobrar ni señas activas.
